@@ -1,2 +1,4 @@
-# OpenWeather
-Simple arduino (ESP8266) library which allows you to get current weather data by city name, ZIP code, coordinates or city ID using openweathermap.org API.
+# DateTime
+Powerful library which helps you with time processing on all arduino boards including special functions designed for ESP8266 that keeps you time synchronized.
+
+This is not all we are working on this README file
