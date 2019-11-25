@@ -967,11 +967,11 @@ unsigned long DateTime::remainingSynchTime(){
 //Enables or disables synchronization
 //If enabled: value will dynamically increase
 //If disabled: value will be still static
-bool DateTime::synchEnable(bool en, bool UTC){
+bool DateTime::synchEnable(bool en){
   bool old = synchEN;
   synchEN = en;
-  onSynchUTC = UTC;
   if(old && !synchEN){
+    //Last time synch before disabling synchronization
     raw_time += (millis()-synch_millis);
     synch_millis = 0; //reset
   }
