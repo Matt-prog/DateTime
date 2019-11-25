@@ -78,6 +78,18 @@ Object DateTime is like date and time variable. It can save time, date, time zon
 
 `toShortDateString(format, separator, UTC);` Converts DateTime to SHORT date String. Arguments are same as in function above.
 
-`onSynch(synch_function, UTC, write_raw)`
+`synchEnable(enable);` Enables or disables synchronization.
+
+`synchEnabled();` Returns true if synchronization is enabled.
+
+`synchInterval(interval);` Synch_function is called after this interval in seconds, but synchronization using milliseconds timer (millis()) still works. That mean that you do not have to set this interval if you want to only use milliseconds timer and no external synch_function.
+
+`remainingSynchTime();` Returns remaining time to next synchronization in milliseconds.
+
+`onSynch(synch_function, UTC, write_raw)` Using this function you can set synch_function, that will be called during synchronization after synchInterval. If argument UTC is true, then new DateTime value in synch_function will be in UTC, else not. If argument write_raw is true, then you need to use `raw()` function to update time, else you need to fill time_s(time structure) inside of synch_function.
+
+`synchNow(now);` This function synchronize time using milliseconds timer immediately, but synch_function is called only if synchInterval expired or if argument now is true (default is false).
+
+
 
 This is not all we are working on this README file
