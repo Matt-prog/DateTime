@@ -570,7 +570,7 @@ class DateTime
   void onSynch(void(*callback)(time_s*), bool UTC = false, bool write_raw = false);
   void synchNow(bool now = true);
   void synchInterval(unsigned int interval); //interval in seconds
-  bool synchEnable(bool en, bool UTC = false);
+  bool synchEnable(bool en);
   bool synchEnabled();
   unsigned long remainingSynchTime();
 
