@@ -5,10 +5,11 @@ Powerful library which helps you with time processing on all arduino boards incl
 Object DateTime is like date and time variable. It can save time, date, time zone, DST and more, but this is not all. You can make it more dynamic using synchronization by milliseconds timer or NTP server (works only on ESP8266). There are lots of others functions or operators that are documented bellow.
 
 **Constructors:**
+
 `DateTime();` Creates new DateTime object with default value 1.1.0001 00:00:00:000.
 
 `DateTime(int64_t mil);` Creates new DateTime object using UTC raw value in milliseconds.
-> Raw value is signed 8-bytes long number (int64_t) in milliseconds that is counted from 1.1.0001 00:00:00:000.
+> Raw DateTime value is signed 8-bytes long number (int64_t) in milliseconds that is counted from 1.1.0001 00:00:00:000.
 
 **Functions:**
 
