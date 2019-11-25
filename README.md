@@ -36,7 +36,7 @@ Object DateTime is like date and time variable. It can save time, date, time zon
 
 `dayUTC(day);` Sets day of DateTime in UTC or returns set day (without argument) in UTC.
 
-`weekdayUTC(day_of_week);` Sets day of week of DateTime in UTC or returns set day of week (without argument) in UTC. Starts at sunday (1), the next is monday (2) or just use enums (WD_SUNDAY, WD_MONDAY,...)
+`weekdayUTC();` Returns day of week in UTC. Starts at sunday (1), the next is monday (2) or just use enums (WD_SUNDAY, WD_MONDAY,...)
 
 
 `milliseconds(millliseconds);` Sets milliseconds of DateTime or returns set milliseconds (without argument).
@@ -53,7 +53,7 @@ Object DateTime is like date and time variable. It can save time, date, time zon
 
 `day(day);` Sets day of DateTime or returns set day (without argument).
 
-`weekday(day_of_week);` Sets day of week of DateTime or returns set day of week (without argument). Starts at sunday (1), the next is monday (2) or just use enums (`WD_SUNDAY`, `WD_MONDAY`,...)
+`weekday(day_of_week);` Returns day of week. Starts at sunday (1), the next is monday (2) or just use enums (`WD_SUNDAY`, `WD_MONDAY`,...)
 
 
 `setTimezone(timezone);` Sets time zone offset in hours. After changing time zone, result value of DateTime will change too.
@@ -90,6 +90,64 @@ Object DateTime is like date and time variable. It can save time, date, time zon
 
 `synchNow(now);` This function synchronize time using milliseconds timer immediately, but synch_function is called only if synchInterval expired or if argument now is true (default is false).
 
+
+`operatorsUseUTC(enable);` Sets or returns true if operators will use UTC value of DateTime.
+
+
+`setUTC(time_s time);` Sets UTC time from time_s (time structure).
+
+`setUTC(hour, minute, second, milliseconds, year, month, day);` Sets time or date and time in UTC. This function have to contain at least first three arguments.
+
+`setDateUTC(hour, minute, second, milliseconds, year, month, day);` Sets date in UTC. This function have to contain year, other arguments are optional.
+
+`set(time_s time);` Sets time from time_s (time structure).
+
+`set(hour, minute, second, milliseconds, year, month, day);` Sets time or date and time. This function have to contain at least first three arguments.
+
+`setDate(hour, minute, second, milliseconds, year, month, day);` Sets date only. This function have to contain year, other arguments are optional.
+
+
+`getUTC();` Returns time_s (time structure) in UTC.
+
+```
+getUTC(short *hour, short *minute, short *second, short *milliseconds, short *year, short *month, short *day);
+getUTC(short *hour, short *minute, short *second, short *milliseconds);
+getUTC(short *hour, short *minute, short *second);
+```
+These three functions will fill your variables (have to be short) with time in UTC. To pass argument use & pointer before variable.
+
+`getDateUTC(short *year, short *month, short *day);` This function will fill your variables (short) with date in UTC. To pass argument use & pointer before variable.
+
+`get();` Returns time_s (time structure).
+
+```
+get(short *hour, short *minute, short *second, short *milliseconds, short *year, short *month, short *day);
+get(short *hour, short *minute, short *second, short *milliseconds);
+get(short *hour, short *minute, short *second);
+```
+These three functions will fill your variables (have to be short) with time. To pass argument use & pointer before variable.
+
+`getDate(short *year, short *month, short *day);` This function will fill your variables (short) with date. To pass argument use & pointer before variable.
+
+`daysUTC()` Returns count of days since 1.1.0001 00:00:00:000 in UTC.
+
+`days()` Returns count of days since 1.1.0001 00:00:00:000.
+
+**time_s or time structure:**
+Variables:
+```
+hour
+minute
+second
+milliseconds
+year
+month
+day
+weekday
+```
+In most applications is weekday "read only", because all functions in this library will compute day of week feom other values.
+
+**Operators:**
 
 
 This is not all we are working on this README file
