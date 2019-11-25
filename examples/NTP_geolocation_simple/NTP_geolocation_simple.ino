@@ -1,6 +1,7 @@
 /* This simple example shows, how to use DateTime with IPGeolocation
  * library, which help us to get time zone and DST and how to synchronize
  * time using NTP server.
+ * You can download IPGeolocation library here: https://github.com/Matt-prog/IPgeolocation-master
  * WARNING: Please do not use delay() or delaymicroseconds(), because it can delay receiving response
  *          from NTP server and you can get inaccurate time.
  * WARNING: This example works only on ESP8266!
