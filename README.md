@@ -8,7 +8,7 @@ Object DateTime is like date and time variable. It can save time, date, time zon
 
 `DateTime();` Creates new DateTime object with default value 1.1.0001 00:00:00:000.
 
-`DateTime(int64_t mil);` Creates new DateTime object using UTC raw value in milliseconds.
+`DateTime(raw_value);` Creates new DateTime object using UTC raw value in milliseconds.
 > Raw DateTime value is signed 8-bytes long number (int64_t) represented as the number of milliseconds elapsed since 1.1.0001 00:00:00:000.
 
 `DateTime(hour, minute, second, milliseconds, year, month, day);`Creates new DateTime object from time and date. This constructor have to contain at least first three arguments.
@@ -22,10 +22,62 @@ Object DateTime is like date and time variable. It can save time, date, time zon
 
 `int64_t raw(UTC);` Returns raw DateTime value in UTC or not.
 
-`millisecondsUTC(millliseconds);` Sets milliseconds of DateTime in UTC or return set milliseconds (without argument) in UTC.
+`millisecondsUTC(millliseconds);` Sets milliseconds of DateTime in UTC or returns set milliseconds (without argument) in UTC.
 
-`secondUTC(seconds);` Sets seconds of DateTime in UTC or return set seconds (without argument) in UTC.
+`secondUTC(seconds);` Sets seconds of DateTime in UTC or returnz set seconds (without argument) in UTC.
+
+`minuteUTC(minutes);` Sets minutes of DateTime in UTC or returns set minutes (without argument) in UTC.
+
+`hourUTC(hours);` Sets hours of DateTime in UTC or returns set hours (without argument) in UTC.
+
+`yearUTC(year);` Sets year of DateTime in UTC or returns set year (without argument) in UTC.
+
+`monthUTC(month);` Sets month of DateTime in UTC or returns set month (without argument) in UTC.
+
+`dayUTC(day);` Sets day of DateTime in UTC or returns set day (without argument) in UTC.
+
+`weekdayUTC(day_of_week);` Sets day of week of DateTime in UTC or returns set day of week (without argument) in UTC. Starts at sunday (1), the next is monday (2) or just use enums (WD_SUNDAY, WD_MONDAY,...)
 
 
+`milliseconds(millliseconds);` Sets milliseconds of DateTime or returns set milliseconds (without argument).
+
+`second(seconds);` Sets seconds of DateTime or returnz set seconds (without argument).
+
+`minute(minutes);` Sets minutes of DateTime or returns set minutes (without argument).
+
+`hour(hours);` Sets hours of DateTime or returns set hours (without argument).
+
+`year(year);` Sets year of DateTime or returns set year (without argument).
+
+`month(month);` Sets month of DateTime or returns set month (without argument).
+
+`day(day);` Sets day of DateTime or returns set day (without argument).
+
+`weekday(day_of_week);` Sets day of week of DateTime or returns set day of week (without argument). Starts at sunday (1), the next is monday (2) or just use enums (`WD_SUNDAY`, `WD_MONDAY`,...)
+
+
+`setTimezone(timezone);` Sets time zone offset in hours. After changing time zone, result value of DateTime will change too.
+
+`getTimezone();` Returns set time zone offset in hours.
+
+`DST(enable, offset);` Sets DST offset in minutes(some countries have offset 10 or 30 minutes) or returns set DST offset in minutes (without arguments) (returns 0 if DST is disabled). This function cannot determine when DST is changing, because it does not have to be same in different countries, so you have to do it manually. On ESP8266 you can use function `updateTZ_DST()` to automatically set time zone and DST due to your location.
+
+`isDST();` Returns true if DST is enabled.
+
+`format(hour_format);` Sets 12-hour or 24-hour format or returns hour format (without argument). We recommended to use enums: `FORMAT_12HOUR` or `FORMAT_24HOUR`.
+
+`isAM();` Returns true if time is an a.m.
+
+`isPM();` Returns true if time is a p.m.
+
+`toLongTimeString(format, separator, UTC);` Converts DateTime to LONG time String in special format (use enums: `H_M_S`, `HH_MM_SS_mmm`,... to define format). Separator is char, that is inserted between two values. Set UTC to true if you want to print time in UTC.
+
+`toShortTimeString(format, separator, UTC);` Converts DateTime to SHORT time String. Arguments are same as in function above.
+
+`toLongDateString(format, separator, UTC);` Converts DateTime to LONG date String in special format (use enums: `DD_MM_YYYY`, `YY_D_M`,... to define format). Separator is char, that is inserted between two values. Set UTC to true if you want to print time in UTC.
+
+`toShortDateString(format, separator, UTC);` Converts DateTime to SHORT date String. Arguments are same as in function above.
+
+`onSynch(synch_function, UTC, write_raw)`
 
 This is not all we are working on this README file
