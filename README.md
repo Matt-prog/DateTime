@@ -209,6 +209,22 @@ dt <= dt;
 dt <= raw_value;
 ```
 
+You can also use these enums with operators:
+```
+MILLISECOND
+SECOND
+MINUTE
+HOUR
+DAY
+WEEK
+MONTH_31
+MONTH_30 or MONTH
+MONTH_29
+MONTH_28
+YEAR
+LEAP_YEAR
+```
+
 ## TimeSpan
 
 TimeSpan is special variable, that can hold time difference in milliseconds.
@@ -216,6 +232,8 @@ TimeSpan is special variable, that can hold time difference in milliseconds.
 **Constructors:**
 
 `TimeSpan();` Creates null TimeSpan.
+
+`TimeSpan(raw_value);` Creates TimeSpan from raw_value.
 
 `TimeSpan(days, hours, minutes, seconds, milliseconds);` Creates new TimeSpan variable. This constructor have to contain only first argument, others are optional.
 
@@ -230,7 +248,7 @@ get(long *days, long *hours, long *minutes);
 get(long *days, long *hours);
 get(long *days);
 ```
-These three functions will fill your variables (have to be long) with time. To pass argument use & pointer before variable.
+These five functions will fill your variables (have to be long) with time. To pass argument use & pointer before variable.
 
 `days(days_);` Sets days of TimeSpan or returns set days (without argument).
 
@@ -277,6 +295,52 @@ ts <= ts;
 ts <= raw_value;
 ```
 
-##Alarm
+## Alarm
+
+**Constructors:**
+
+`Alarm();` Creates null Alarm object.
+
+`Alarm(DateTime *dt);` Creates Alarm object with alarm set at time and date from variable DateTime. To pass argument use & pointer before variable. If you change DateTime after this assignment, alarm setting will not change.
+
+`Alarm(time_s tim);` Creates Alarm object with alarm set at time and date from time structure (time_s).
+
+`Alarm(hour, minute, second, mil, year, month, day);` Creates Alarm object with alarm set at time and date. This constructor have to contain at least first two arguments.
+
+`setAlarm(DateTime *dt);` Sets alarm at time and date from variable DateTime. To pass argument use & pointer before variable. If you change DateTime after this assignment, alarm setting will not change.
+
+`setAlarm(time_s *tim);` Sets alarm at time and date from time structure (time_s).
+
+`setAlarm(hour, minute, second, mil, year, month, day);` Sets alarm at time and date. This function have to contain at least first two arguments.
+
+`getAlarm(DateTime *dt);` Writes alarm set time and date to DateTime. To pass argument use & pointer before variable.
+
+`getAlarm();` Returns alarm set time and date as time structure (time_s).
+
+```
+getAlarm(short *hour, short *minute, short *second, short *mil, short *year, short *month, short *day);
+getAlarm(short *hour, short *minute, short *second, short *mil);
+getAlarm(short *hour, short *minute, short *second);
+getAlarm(short *hour, short *minute);
+```
+These four functions will fill your variables (have to be long) with time and date of alarm setting. To pass argument use & pointer before variable.
+
+`onDays(byte *days, count);` Sets days of week, when alarm can ring. This setting is usable only when repeating is enabled. First paramenter is byte array of days, for example: `byte days[] = {WD_SUNDAY, WD_FRIDAY};`. Second parameter is count of days in this array. If you change this array after this assignment, set days will change too.
+
+`onDays();` This function without any parameter clear this setting.
+
+`enable(enable);` Enables or disables alarm.
+
+`enabled();` Returns true when alarm is enabled;
+
+`repeat(enable);` Sets if alarm will set new date (from available days of week which you set in function `onDays()`) after ringing or if it disables itself. This function without argument returns if repeating is enabled.
+
+`setSynch(DateTime *dt);` Sets "clock" with real time. Here it is synchronized DateTime. We recommend this type of synchronization, because it is the most accurate method. To pass argument use & pointer before variable.
+
+`setSynch(time_s *tim);` Sets "clock" with real time. Here it is time structure (time_s), that is extarnally synchronized with real time as often as possible. To pass argument use & pointer before variable.
+
+Third way how to synchronize time is to write it directly to handler `handleAlarm()`, but if you have used first or second sync method, you have to use `resetSynch();` to reset setting. This method is documented bellow.
+
+
 
 This is not all we are working on this README file
