@@ -119,9 +119,9 @@ extern "C"
 #define M_S           106
 #define MM_SS         107
 #define M_S_m         108
-#define MM_SS_mm      109
+#define MM_SS_mmm     109
 #define S_m           110
-#define SS_mm         111
+#define SS_mmm        111
 
 #endif
 
