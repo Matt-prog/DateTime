@@ -432,8 +432,12 @@ bool Alarm::handleAlarm(short hour, short minute, short second, short mil, short
       ring = (next_ring_mi <= millis() && now.hour >= al_time.hour && now.minute >= al_time.minute && now.second >= al_time.second && now.milliseconds >= al_time.milliseconds);
       if(ring) next_ring_mi = millis()+HOUR_IN_MILLIS*23 - MINUTE; //the alarm can only ring after one day (with some tolerance)
     }
-    else if(now.second != null_time && al_time.second != null_time){ //we can work with: hour,minute,second,milliseconds
+    else if(now.second != null_time && al_time.second != null_time){ //we can work with: hour,minute,second
       ring = (next_ring_mi <= millis() && now.hour >= al_time.hour && now.minute >= al_time.minute && now.second >= al_time.second);
+      if(ring) next_ring_mi = millis()+HOUR_IN_MILLIS*23 - MINUTE; //the alarm can only ring after one day (with some tolerance)
+    }
+    else if(now.minute != null_time && al_time.minute != null_time){ //we can work with: hour and minute
+      ring = (next_ring_mi <= millis() && now.hour >= al_time.hour && now.minute >= al_time.minute);
       if(ring) next_ring_mi = millis()+HOUR_IN_MILLIS*23 - MINUTE; //the alarm can only ring after one day (with some tolerance)
     }
     else{
