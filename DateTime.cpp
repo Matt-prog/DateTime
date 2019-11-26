@@ -1064,9 +1064,9 @@ String DateTime::toLongTimeString(byte _form,const char separator, bool UTC){
     case M_S: return String(minute)+f_min+separator+String(second)+f_s;
     case MM_SS: return String_(minute,2)+f_min+separator+String_(second,2)+f_s;
     case M_S_m: return String(minute)+f_min+separator+String(second)+f_s+separator+String(mil)+f_ms;
-    case MM_SS_mm: return String_(minute,2)+f_min+separator+String_(second,2)+f_s+separator+String_(mil,2)+f_ms;
+    case MM_SS_mmm: return String_(minute,2)+f_min+separator+String_(second,2)+f_s+separator+String_(mil,2)+f_ms;
     case S_m: return String(second)+f_s+separator+String(mil)+f_ms;
-    case SS_mm: return String_(second,2)+f_s+separator+String_(mil,2)+f_ms;
+    case SS_mmm: return String_(second,2)+f_s+separator+String_(mil,2)+f_ms;
   }
 }
 
@@ -1100,9 +1100,9 @@ String DateTime::toShortTimeString(byte _form,const char separator, bool UTC){
     case M_S: return String(minute)+separator+String(second);
     case MM_SS: return String_(minute,2)+separator+String_(second,2);
     case M_S_m: return String(minute)+separator+String(second)+separator+String(mil);
-    case MM_SS_mm: return String_(minute,2)+separator+String_(second,2)+separator+String_(mil,3);
+    case MM_SS_mmm: return String_(minute,2)+separator+String_(second,2)+separator+String_(mil,3);
     case S_m: return String(second)+separator+String(mil);
-    case SS_mm: return String_(second,2)+separator+String_(mil,3);
+    case SS_mmm: return String_(second,2)+separator+String_(mil,3);
   }
 }
 
