@@ -301,9 +301,10 @@ void Alarm::onRinging(void(*callback)(time_s)){
 //Sets array of days when the alarm will ring
 //If repeating is dissabled, those days will be ignored
 //Input value _count is size of the array
-//EXAMPLE: onDays((const byte[]){WD_MONDAY, WD_FRIDAY},2);
+//EXAMPLE: byte days[] = {WD_MONDAY, WD_FRIDAY};
+//         onDays(days,2);
 //You can use enums WD_MONDAY,WD_TUESDAY, ...
-void Alarm::onDays(/*const */byte *_days, byte _count){
+void Alarm::onDays(byte *_days, byte _count){
   days = _days;
   days_cnt = _count;
   days_en = true;
