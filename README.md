@@ -209,8 +209,74 @@ dt <= dt;
 dt <= raw_value;
 ```
 
-# TimeSpan
+## TimeSpan
 
+TimeSpan is special variable, that can hold time difference in milliseconds.
 
+**Constructors:**
+
+`TimeSpan();` Creates null TimeSpan.
+
+`TimeSpan(days, hours, minutes, seconds, milliseconds);` Creates new TimeSpan variable. This constructor have to contain only first argument, others are optional.
+
+**Functions:**
+
+`set(days, hours, minutes, seconds, milliseconds);` Sets new values of TimeSpan. This function have to contain only first argument, others are optional.
+
+```
+get(long *days, long *hours, long *minutes, long *seconds, long *milliseconds);
+get(long *days, long *hours, long *minutes, long *seconds);
+get(long *days, long *hours, long *minutes);
+get(long *days, long *hours);
+get(long *days);
+```
+These three functions will fill your variables (have to be long) with time. To pass argument use & pointer before variable.
+
+`days(days_);` Sets days of TimeSpan or returns set days (without argument).
+
+`hours(hours_);` Sets hours of TimeSpan or returns set hours (without argument).
+
+`minutes(minutes_);` Sets minutes of TimeSpan or returns set minutes (without argument).
+
+`seconds(seconds_);` Sets seconds of TimeSpan or returns set seconds (without argument).
+
+`milliseconds(milliseconds_);` Sets milliseconds of TimeSpan or returns set milliseconds (without argument).
+
+`raw(raw_value);` Sets or returns raw TimeSpan value. Argument UTC is missing because we do not need it here.
+
+**Operators:**
+
+```
+DateTime dt;
+TimeSpan ts;
+
+ts(); //returns raw TimeSpan value
+
+ts(days, hours, minutes, seconds, milliseconds); //sets new TimeSpan values
+
+ts = raw_value; //assigns raw TimeSpan value
+
+ts = ts + raw_value;
+ts = ts - raw_value;
+ts = ts + ts;
+ts = ts - ts;
+ts = dt + ts;
+ts = dt - ts;
+//You can also use += or -= operator
+
+//comparison operators:
+ts == ts;
+ts == raw_value;
+ts > ts;
+ts > raw_value;
+ts < ts;
+ts < raw_value;
+ts >= ts;
+ts >= raw_value;
+ts <= ts;
+ts <= raw_value;
+```
+
+##Alarm
 
 This is not all we are working on this README file
