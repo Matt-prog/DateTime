@@ -1,4 +1,4 @@
-### DateTime library
+# DateTime library
 Powerful library which helps you with time processing on all arduino boards including special functions designed for ESP8266 that keeps you time synchronized. There are a lot of ways to use this library. You can use date and time "variable", get difference between dates and times, set alarm or set millistimer. Main advantage of this library is the wide date range (from 1.1.32767 BC to 31.12.32767) including leap years, also millisecond time accuracy.  
 
 ## DateTime
@@ -129,11 +129,40 @@ These three functions will fill your variables (have to be short) with time. To 
 
 `getDate(short *year, short *month, short *day);` This function will fill your variables (short) with date. To pass argument use & pointer before variable.
 
-`daysUTC()` Returns count of days since 1.1.0001 00:00:00:000 in UTC.
+`daysUTC();` Returns count of days since 1.1.0001 00:00:00:000 in UTC.
 
-`days()` Returns count of days since 1.1.0001 00:00:00:000.
+`days();` Returns count of days since 1.1.0001 00:00:00:000.
+
+**ESP8266 only functions:**
+
+`setNTPserver(URL);` Sets NTP server address.
+
+`NTPclockID();` Returns received NTP clock ID reference.
+
+`NTPlastError();` Returns last error that appear during NTP packet receivig. Use NTP error enums: `NTP_NONE`, `NTP_OK`, `NTP_NOT_FOUND`, `NTP_TIMEOUT`, `NTP_BAD_RESPONSE`, `NTP_NO_INTERNET`.
+
+`NTPinterval(interval);` Sets interval of NTP synchronization in seconds. (Minimal interval is 120 seconds).
+
+`NTPenable(enable);` Enables NTP synchronization. You do not have to call `synchEnable()`, because it will be called inside automatically, but when you are disabling NTP synchronization, you have to call it to disable milliseconds timer synchronization.
+
+`NTPenabled();` Returns true if NTP synchronization is enabled.
+
+`NTPsynchNow();` Immediately sends NTP packet request.
+
+`remainingNTPsynchTime();` Returns remaining time to next NTP synchronization. Returns negative value when request was sent, but response was not received yet (remaining time to timeout, timeout is 5 seconds). Returns positive value when last synchronization has finished and the device is waiting to next synchronization.
+
+`NTPhandler();` This function have to be included in loop when you want to use NTP synchronization.
+>Do not use delay in your code if you want to use NTP synchronization, because you can get unaccurate time results.
+
+`onNTPsynch(after_NTP_function);` Sets function which is done after NTP synchronization or receiving error. After_NTP_function has one parameter, that returns current NTP error.
+
+`updateTZ_DST();` Automatically updates time zone and DST offset due to your public IP address using server worldtimeapi.org.
+
+`updateTZ_DST_lastError();` Returns last error (http code) that was received from server.
+
 
 **time_s or time structure:**
+
 Variables:
 ```
 hour
@@ -148,6 +177,40 @@ weekday
 In most applications is weekday "read only", because all functions in this library will compute day of week feom other values.
 
 **Operators:**
+
+```
+DateTime dt;
+TimeSpan ts;
+
+dt(); //returns raw DateTime value
+
+dt(hour, minute, second, milliseconds, year, month, day); //sets new date and time
+
+dt = raw_value; //assigns raw DateTime value
+
+dt = dt + raw_value;
+dt = dt - raw_value;
+dt = dt + ts; //TimeSpan
+dt = dt - ts; //TimeSpan
+dt = dt - dt;
+dt = dt + dt; //mostly unused function
+//You can also use += or -= operator
+
+//comparison operators:
+dt == dt;
+dt == raw_value;
+dt > dt;
+dt > raw_value;
+dt < dt;
+dt < raw_value;
+dt >= dt;
+dt >= raw_value;
+dt <= dt;
+dt <= raw_value;
+```
+
+# TimeSpan
+
 
 
 This is not all we are working on this README file
