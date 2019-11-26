@@ -449,7 +449,7 @@ bool Alarm::handleAlarm(short hour, short minute, short second, short mil, short
       if(_onRinging){
         _onRinging(now);
       }
-      else return false;
+      //else return false;
     }
   }
   return true;
