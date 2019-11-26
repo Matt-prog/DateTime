@@ -384,9 +384,9 @@ These four functions will fill your variables (have to be short) with time and d
 
 `repeat(enable);` Sets if millis timer will resets after expiration. When it is called without any parameter, it will return true if repeating is enabled.
 
-##You should to know
+## You should to know
 
-- Function that is called on DateTime synch have to look like this:
+Function that is called on DateTime synch have to look like this:
 ```
 DateTime dt;
 dt.onSynch(DTsynch, false, false); //or just use onSynch(DTsynch);
@@ -398,7 +398,7 @@ void DTsynch(time_s *old_time){
 }
 ```
 
-- Function that is called on Alarm ringing have to look like this:
+Function that is called on Alarm ringing have to look like this:
 ```
 Alarm al;
 al.onRinging(Alarm_ring);
@@ -420,7 +420,7 @@ void onTimer(){
 }
 ```
 
-- All available formats that are used when DateTime is converted to String (for example: `toLongString()`,...):
+All available formats that are used when DateTime is converted to String (for example: `toLongString()`,...):
 For date:
 ```
 DD_MM_YYYY  //08.06.2019
@@ -473,8 +473,8 @@ S_m           //3:54
 SS_mmm        //03:054
 ```
 
--`null_time` can be used on variables hour,minute,second,milliseconds,year,month,day with function `set()`. It says, that this value will be ignored and will not be replaced by new value.
+`null_time` can be used on variables hour,minute,second,milliseconds,year,month,day with function `set()`. It says, that this value will be ignored and will not be replaced by new value.
 
-- Raw DateTime value cannot be printed or converted to String, because it is uint64_t. But you can use `String toStr64(uint64_t num);` that converts uint64_t to String.
+Raw DateTime value cannot be printed or converted to String, because it is uint64_t. But you can use `String toStr64(uint64_t num);` that converts uint64_t to String.
 
 Not all functions was documented here, if you want to know more info or functions, you should to read DateTime.cpp file.
