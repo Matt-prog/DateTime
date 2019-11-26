@@ -307,6 +307,8 @@ ts <= raw_value;
 
 `Alarm(hour, minute, second, mil, year, month, day);` Creates Alarm object with alarm set at time and date. This constructor have to contain at least first two arguments.
 
+**Functions:**
+
 `setAlarm(DateTime *dt);` Sets alarm at time and date from variable DateTime. To pass argument use & pointer before variable. If you change DateTime after this assignment, alarm setting will not change.
 
 `setAlarm(time_s *tim);` Sets alarm at time and date from time structure (time_s).
@@ -323,11 +325,11 @@ getAlarm(short *hour, short *minute, short *second, short *mil);
 getAlarm(short *hour, short *minute, short *second);
 getAlarm(short *hour, short *minute);
 ```
-These four functions will fill your variables (have to be long) with time and date of alarm setting. To pass argument use & pointer before variable.
+These four functions will fill your variables (have to be short) with time and date of alarm setting. To pass argument use & pointer before variable.
 
 `onDays(byte *days, count);` Sets days of week, when alarm can ring. This setting is usable only when repeating is enabled. First paramenter is byte array of days, for example: `byte days[] = {WD_SUNDAY, WD_FRIDAY};`. Second parameter is count of days in this array. If you change this array after this assignment, set days will change too.
 
-`onDays();` This function without any parameter clear this setting.
+`onDays();` This function without any parameter clear this setting (sets that every day in week is available).
 
 `enable(enable);` Enables or disables alarm.
 
@@ -335,12 +337,142 @@ These four functions will fill your variables (have to be long) with time and da
 
 `repeat(enable);` Sets if alarm will set new date (from available days of week which you set in function `onDays()`) after ringing or if it disables itself. This function without argument returns if repeating is enabled.
 
-`setSynch(DateTime *dt);` Sets "clock" with real time. Here it is synchronized DateTime. We recommend this type of synchronization, because it is the most accurate method. To pass argument use & pointer before variable.
+`resetProtection();` Resets alarm protection timer.
+>Alarm protection timer interval is set to aproximmatelly 23 hours after the last ring. This is very necessary, because when you have your alarm synchronized only with time (not date), and after ringing time will move back (because of unaccurate time synchronization) or time will be checked more times in just one second, it can cause, that alarm will rings two times in a row. But when you change DST or time zone, we recommended to use function above to reset this protection.
 
-`setSynch(time_s *tim);` Sets "clock" with real time. Here it is time structure (time_s), that is extarnally synchronized with real time as often as possible. To pass argument use & pointer before variable.
+>Alarm protection works only when you use third method of time synchronizing (or second method, but with null date values) and you did not fill date parameters or when you use function `setAlarm(hour, minute, second, mil, year, month, day)` without date parameters.
 
-Third way how to synchronize time is to write it directly to handler `handleAlarm()`, but if you have used first or second sync method, you have to use `resetSynch();` to reset setting. This method is documented bellow.
+`onRinging(function);` Sets function that is called when alarm rings.
 
+**Three methods how to synchronize alarm clock with real time:**
 
+1. `setSynch(DateTime *dt);` Sets "clock" with real time. Here it is synchronized DateTime. We recommend this type of synchronization, because it is the most accurate method. To pass argument use & pointer before variable.
 
-This is not all we are working on this README file
+2. `setSynch(time_s *tim);` Sets "clock" with real time. Here it is time structure (time_s), that is extarnally synchronized with real time as often as possible. To pass argument use & pointer before variable.
+
+3. Third way how to synchronize time is to write it directly to handler `handleAlarm()`, but if you have used first or second sync method, you have to use `resetSynch();` to reset synch setting. This method is documented bellow.
+
+`handleAlarm(hour, minute, second, mil, year, month, day);` This function have to be included in loop when you want to use Alarm. You have to use this function with aguments (first two are required, others are optional) when you have chosen third method of time synchronization. Arguments have to contain real time values. This function returns true when everything is set correctly.
+
+`handleAlarm();` This function have to be included in loop only when you are using first or second method of time sync.
+
+##MillisTimer
+
+**Constructors:**
+
+`MillisTimer();` Creates null millis timer.
+
+`MillisTimer(millis_interval);` Creates millis timer and sets interval in milliseconds.
+
+**Functions:**
+
+`setInterval(millis_interval);` Sets interval of millis timer in milliseconds
+
+`getInterval();` Returns interval of millis timer in milliseconds.
+
+`remainingTime();` Returns remaining time until millis timer expires in milliseconds.
+
+`onHandle(function);` Sets function that is done after time expires.
+
+`handleTime();` This function have to be included in loop.
+
+`reset();` Resets millis timer with last set interval.
+
+`enable(enable);` Enables millis timer. When timer was disabled and now you are enabling it, it will automatically resets.
+
+`enabled();` Returns true when millis timer is enabled.
+
+`repeat(enable);` Sets if millis timer will resets after expiration. When it is called without any parameter, it will return true if repeating is enabled.
+
+##You should to know
+
+Function that is called on DateTime synch have to look like this:
+```
+DateTime dt;
+dt.onSynch(DTsynch, false, false); //or just use onSynch(DTsynch);
+
+void DTsynch(time_s *old_time){
+  old_time->hour = new_hour;
+  old_time->minute = new_minute;
+  //...
+}
+```
+
+Function that is called on Alarm ringing have to look like this:
+```
+Alarm al;
+al.onRinging(Alarm_ring);
+
+void Alarm_ring(time_s now){
+  //structure now is time right now, when Alarm is ringing
+  Serial.print(now.second);
+  //...
+}
+```
+
+Function that is called on MillisTimer expiration have to look like this:
+```
+MillisTimer mt;
+mt.onHandle(onTimer);
+
+void onTimer(){
+  Serial.println("Timer expired!");
+}
+```
+
+All available formats that are used when DateTime is converted to String (for example: `toLongString()`,...):
+For date:
+```
+DD_MM_YYYY  //08.06.2019
+DD_M_YYYY   //08.6.2019
+D_MM_YYYY   //8.06.2019
+D_M_YYYY    //8.6.2019
+MM_YYYY     //06.2019
+M_YYYY      //6.2019
+YYYY_MM_DD  //2019.06.08
+YYYY_M_DD   //2019.6.08
+YYYY_MM_D   //2019.06.8
+YYYY_M_D    //2019.6.8
+YYYY_MM     //2019.06
+YYYY_M      //2019.6
+DD_MM_YY    //08.06.19
+DD_M_YY     //08.6.19
+D_MM_YY     //8.06.19
+D_M_YY      //8.6.19
+MM_YY       //06.19
+M_YY        //6.19
+YY_MM_DD    //19.06.08
+YY_M_DD     //19.6.08
+YY_MM_D     //19.06.8
+YY_M_D      //19.6.8
+YY_MM       //19.06
+YY_M        //19.6
+DD_MM       //08.06
+DD_M        //08.6
+D_MM        //8.06
+D_M         //8.6
+MM_DD       //06.08
+M_DD        //6.08
+MM_D        //06.8
+M_D         //6.8
+```
+
+For time:
+```
+HH_MM_SS_mmm  //09:05:03:054
+H_M_S_m       //9:5:3:54
+HH_MM_SS      //09:05:03
+H_M_S         //9:5:3
+HH_MM         //09:05
+H_M           //9:5
+M_S           //5:3
+MM_SS         //05:03
+M_S_m         //5:3:54
+MM_SS_mmm     //05:03:054
+S_m           //3:54
+SS_mmm        //03:054
+```
+
+`null_time` can be used on variables hour,minute,second,milliseconds,year,month,day with function `set()`. It says, that thiv value will be ignored and will not be replaced by new value.
+
+For more info just open .cpp file.
