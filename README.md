@@ -411,7 +411,7 @@ void Alarm_ring(time_s now){
 }
 ```
 
-- Function that is called on MillisTimer expiration have to look like this:
+Function that is called on MillisTimer expiration have to look like this:
 ```
 MillisTimer mt;
 mt.onHandle(onTimer);
