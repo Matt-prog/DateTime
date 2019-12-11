@@ -1036,7 +1036,7 @@ bool DateTime::isAM(){
 //Second sets char separator between values
 //Third sets if value will be in UTC
 String DateTime::toLongTimeString(byte _form,const char separator, bool UTC){
-  if(_form < HH_MM_SS_mmm || _form > SS_mm) _form = H_M_S;
+  if(_form < HH_MM_SS_mmm || _form > SS_mmm) _form = H_M_S;
   short hour, minute, second, mil, year, month, day;
   readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, UTC);
   String pm = "";
@@ -1076,7 +1076,7 @@ String DateTime::toLongTimeString(byte _form,const char separator, bool UTC){
 //Second sets char separator between values
 //Third sets if value will be in UTC
 String DateTime::toShortTimeString(byte _form,const char separator, bool UTC){
-  if(_form < HH_MM_SS_mmm || _form > SS_mm) _form = H_M_S;
+  if(_form < HH_MM_SS_mmm || _form > SS_mmm) _form = H_M_S;
   short hour, minute, second, mil, year, month, day;
   readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, UTC);
   String pm = "";
