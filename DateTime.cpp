@@ -120,6 +120,7 @@ uint16_t dayInYear(byte day, byte month, short year){
 }
 
 
+
 MillisTimer::MillisTimer(){
   interval = 0;
 }
@@ -605,6 +606,59 @@ int64_t DateTime::raw(bool UTC){
 }
 
 
+
+//This function copy informations from DateTime dt to this class
+//DateTime dt - class you want to copy from
+//cpy_time - true if you want to copy date and time
+//cpy_TZ - true if you want to copy time zone
+//cpy_DST - true if you want to copy DST settings
+//cpy_format - true if you want to copy hour format
+//cpy_operatorsUseUTC - true if you want to copy operatorsUseUTC() setting
+//cpy_synch - true if you want to copy all synch settings
+//cpy_NTP - true if you want to copy all NTP synch settings
+void DateTime::copy(DateTime &dt, bool cpy_time, bool cpy_TZ, bool cpy_DST, bool cpy_format, bool cpy_operatorsUseUTC, bool cpy_synch, bool cpy_NTP){
+  if(cpy_time) raw(dt.raw(true),true);
+  if(cpy_TZ) setTimezone(dt.getTimezone());
+  if(cpy_DST) DST(true,dt.DST());
+  if(cpy_format) format(dt.format());
+  if(cpy_operatorsUseUTC) operatorsUseUTC(dt.operatorsUseUTC());
+  if(cpy_synch){
+    dt.synchCPY(_onSynch,&onSynchUTC,&swr,&synch_interval,&synch_millis);
+    synchEnable(dt.synchEnabled());
+  }
+  #ifdef ESP8266 //code only for ESP8266
+  if(cpy_NTP){
+    dt.NTPsynchCPY(_onNTPsynch,&ntp_err,&TZDST_err,&ntp_server_url,&ntp_en,&ntp_synch_int,&ntp,clck_id,&prepared,&TZDST_mil,&ntp_mil);
+  }
+  #endif
+}
+
+
+void DateTime::synchCPY(void(*callback)(time_s*),bool *onSynchUTC_, bool *swr_, unsigned int *synch_interval_, unsigned long *synch_millis_){
+  callback = _onSynch;
+  *onSynchUTC_ = onSynchUTC;
+  *swr_ = swr;
+  *synch_interval_ = synch_interval;
+  *synch_millis_ = synch_millis;
+}
+
+#ifdef ESP8266 //code only for ESP8266
+void DateTime::NTPsynchCPY(void (*callback)(byte), byte *ntp_err_, int *TZDST_err_, char *ntp_server_url_[], bool *ntp_en_, unsigned int *ntp_synch_int_, WiFiUDP *ntp_, char clck_id_[5], bool *prepared_, unsigned long *TZDST_mil_, unsigned long *ntp_mil_){
+  callback = _onNTPsynch;
+  *ntp_err_ = ntp_err;
+  *TZDST_err_ = TZDST_err;
+  *ntp_server_url_ = ntp_server_url;
+  *ntp_en_ = ntp_en;
+  *ntp_synch_int_ = ntp_synch_int;
+  *ntp_ = ntp;
+  for(byte i = 0; i < 5; i++) clck_id_[i] = clck_id[i];
+  *prepared_ = prepared;
+  *TZDST_mil_ = TZDST_mil;
+  *ntp_mil_ = ntp_mil;
+}
+#endif
+
+
 //Sets and/or return milliseconds in UTC
 uint16_t DateTime::millisecondsUTC(uint16_t mil){
   return getWriteOne(mil,GWO_MILLIS,true);
@@ -805,6 +859,19 @@ void DateTime::getTimeSpan(long *days){
   *days = raw_time/DAY;
 }
 #endif
+
+
+//Sets time using UNIX time format (time in seconds elapsed from 1.1.1970)
+//Parameter ms sets milliseconds (optional)
+void DateTime::setUNIX(uint32_t tim, short ms){
+  raw_time = (int64_t)tim*SECOND + time_base1970 + ms;
+}
+
+//Returns time in UNIX time format (time in seconds elapsed from 1.1.1970)
+//This value can be easly converted to time_t (e.g. time_t now = dt.getUNIX();)
+uint32_t DateTime::getUNIX(){
+  return (raw_time - time_base1970)/SECOND;
+}
 
 //Sets new DateTime values in UTC
 void DateTime::setUTC(short hour, short minute, short second, short mil, short year, short month, short day){
@@ -1036,7 +1103,7 @@ bool DateTime::isAM(){
 //Second sets char separator between values
 //Third sets if value will be in UTC
 String DateTime::toLongTimeString(byte _form,const char separator, bool UTC){
-  if(_form < HH_MM_SS_mmm || _form > SS_mm) _form = H_M_S;
+  if(_form < HH_MM_SS_mmm || _form > SS_mmm) _form = H_M_S;
   short hour, minute, second, mil, year, month, day;
   readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, UTC);
   String pm = "";
@@ -1076,7 +1143,7 @@ String DateTime::toLongTimeString(byte _form,const char separator, bool UTC){
 //Second sets char separator between values
 //Third sets if value will be in UTC
 String DateTime::toShortTimeString(byte _form,const char separator, bool UTC){
-  if(_form < HH_MM_SS_mmm || _form > SS_mm) _form = H_M_S;
+  if(_form < HH_MM_SS_mmm || _form > SS_mmm) _form = H_M_S;
   short hour, minute, second, mil, year, month, day;
   readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, UTC);
   String pm = "";
@@ -1231,7 +1298,7 @@ String DateTime::String_(short value, byte dec_places){
 #ifdef ESP8266 //code only for ESP8266
 
 //Sets NTP server URL address
-void DateTime::setNTPserver(const char* addr){
+void DateTime::setNTPserver(char* addr){
   ntp_server_url = addr;
 }
 
