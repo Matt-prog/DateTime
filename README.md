@@ -23,6 +23,9 @@ Object DateTime is like date and time variable. It can save time, date, time zon
 
 `int64_t raw(UTC);` Returns raw DateTime value in UTC or not.
 
+`copy(DateTime &dt);` Copy all settings from dt instance to actual instance. This function is here instead of assigning, because assignment can copy only raw value. You can also set specific "data" to copy, more info is in .cpp file.
+
+
 `millisecondsUTC(millliseconds);` Sets milliseconds of DateTime in UTC or returns set milliseconds (without argument) in UTC.
 
 `secondUTC(seconds);` Sets seconds of DateTime in UTC or returnz set seconds (without argument) in UTC.
@@ -107,6 +110,8 @@ Object DateTime is like date and time variable. It can save time, date, time zon
 
 `setDate(hour, minute, second, milliseconds, year, month, day);` Sets date only. This function have to contain year, other arguments are optional.
 
+`setUNIX(uint32_t time, ms);` Sets time using UNIX time format (number of seconds that have elapsed since 1.1.1970). You can also sets milliseconds using parameter ms (optional).
+
 
 `getUTC();` Returns time_s (time structure) in UTC.
 
@@ -129,6 +134,9 @@ get(short *hour, short *minute, short *second);
 These three functions will fill your variables (have to be short) with time. To pass argument use & pointer before variable.
 
 `getDate(short *year, short *month, short *day);` This function will fill your variables (short) with date. To pass argument use & pointer before variable.
+
+`getUNIX();` Returns time in UNIX time format (value is in seconds).
+
 
 `daysUTC();` Returns count of days since 1.1.0001 00:00:00:000 in UTC.
 
