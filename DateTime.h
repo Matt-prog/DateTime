@@ -12,6 +12,7 @@
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 #include <ESP8266HTTPClient.h>
+//#include <time.h>
 #endif
 
 /*! CPP guard */
@@ -523,6 +524,9 @@ class DateTime
   void getTimeSpan(long *days);
   #endif
 
+  void setUNIX(uint32_t tim, short ms);
+  uint32_t getUNIX();
+
   void setUTC(time_s time){setUTC(time.hour,time.second,time.minute,time.milliseconds,time.year,time.month,time.day);}
   void setUTC(short hour, short minute = null_time, short second = null_time, short mil = null_time,short year = null_time, short month = null_time, short day = null_time);
   void setDateUTC(short year, short month = null_time, short day = null_time);
@@ -560,6 +564,15 @@ class DateTime
   bool isPM();
   bool isAM();
 
+  void copy(DateTime &dt, bool cpy_time = true, bool cpy_TZ = true, bool cpy_DST = true, bool cpy_format = true, bool cpy_operatorsUseUTC = true, bool cpy_synch = true, bool cpy_NTP = true);
+  
+  //DO NOT USE TWO FUNCTIONS BELLOW
+  void synchCPY(void(*callback)(time_s*),bool *onSynchUTC_, bool *swr_, unsigned int *synch_interval_, unsigned long *synch_millis_);
+  #ifdef ESP8266 //code only for ESP8266
+  void NTPsynchCPY(void (*callback)(byte), byte *ntp_err_, int *TZDST_err_, char *ntp_server_url_[], bool *ntp_en_, unsigned int *ntp_synch_int_, WiFiUDP *ntp_, char clck_id_[5], bool *prepared_, unsigned long *TZDST_mil_, unsigned long *ntp_mil_);
+  #endif
+  //////////////////////////////////
+
   #ifndef DateTime_SAVE_FLASH
   String toLongTimeString(byte _form = H_M_S,const char separator = ':', bool UTC = false);
   String toShortTimeString(byte _form = H_M_S,const char separator = ':', bool UTC = false);
@@ -576,7 +589,7 @@ class DateTime
 
   #ifdef ESP8266 //code only for ESP8266
 
-  void setNTPserver(const char* addr);
+  void setNTPserver(char* addr);
   char* NTPclockID();
   byte NTPlastError();
   void NTPinterval(unsigned int interval);
@@ -607,16 +620,18 @@ class DateTime
   bool time_format = FORMAT_24HOUR;
   bool _PM = false;
   bool opUTC = false; //Use UTC with operators
-  const int64_t time_base = 59926608000000LL; //1.1.1900 0:0:0:0 time base for UNIX time
+  const int64_t time_base = 59926608000000LL; //1.1.1900 0:0:0:0 time base for NTP server epoch
+  const int64_t time_base1970 = 62135596800000LL; //1.1.1970 0:0:0:0 time base for UNIX time
+
 
   #ifdef ESP8266 //code only for ESP8266
   const unsigned int localPort = 2390; // local port to listen for UDP packets
   byte ntp_err = 0; //Last error from NTP synchronization
   int TZDST_err = 0; //Last error from Time zone and DST update
-  const char* ntp_server_url; //NTP server address
+  char* ntp_server_url; //NTP server address
   bool ntp_en = false; //True if ntp synchronization is enabled
   unsigned int ntp_synch_int = 120; //ntp synchronization interval in seconds
-  WiFiUDP ntp; //NTP setver
+  WiFiUDP ntp; //NTP server
   byte packetBuffer[NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing packets
   char clck_id[5] = {0}; //clock ID
   bool prepared;
