@@ -40,7 +40,7 @@ void setup() {
   //Set alarm at specific time:
   //alarm1.setAlarm(22,0,0,0,2019,9,14);  //Set alarm manually (hour,minute,second,millisecond,year,month,day)
   //alarm1.setAlarm(&alarm_set);          //Set alarm using DateTime variable
-  alarm1.setAlarm(&al);                   //Set alarm using time structure
+  alarm1.setAlarm(al);                   //Set alarm using time structure
   //You don't have to fill weekday, it will be automatically determined
   
   alarm1.onRinging(ring);   //Set function which will be done after alarm rings

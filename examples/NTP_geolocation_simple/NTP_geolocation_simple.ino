@@ -19,7 +19,7 @@
 //To get this API key, you have to register at https://ipgeolocation.io/
 #define GEO_API_KEY "your-geo-api-key"
 
-const char* ntpServerName = "your-NTP-pool-server"; //Insert URL address of NTP server
+char* ntpServerName = "your-NTP-pool-server"; //Insert URL address of NTP server
 
 DateTime now = DateTime(); //Date time object
 
@@ -50,7 +50,7 @@ void setup() {
   //We are using IPgeolocation API to get time offset and DST offset
   Serial.println();
   Serial.println("Geolocation: ");
-  if(geo.updateStatus(&IPG)) Serial.println("DONE");
+  if(geo.updateData(&IPG)) Serial.println("DONE");
   else Serial.println("FAILED");
   Serial.println();
 
@@ -99,4 +99,3 @@ void NTP_synch(byte error){
 #else
   #error "We are sorry, but this example works only on ESP8266!"
 #endif
-

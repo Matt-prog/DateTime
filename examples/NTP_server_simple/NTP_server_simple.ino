@@ -13,7 +13,7 @@
 #define SSID "your-ssid"
 #define PASS  "your-password"
 
-const char* ntpServerName = "your-NTP-pool-server"; //Insert URL address of NTP server
+char* ntpServerName = "your-NTP-pool-server"; //Insert URL address of NTP server
 
 #define timeZone +1 //Time zone GMT+1
 #define DST_offset 60 //DST offset in minutes

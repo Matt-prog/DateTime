@@ -14,7 +14,7 @@
 #define SSID "your-ssid"
 #define PASS  "your-password"
 
-const char* ntpServerName = "your-NTP-pool-server"; //Insert URL address of NTP server
+char* ntpServerName = "your-NTP-pool-server"; //Insert URL address of NTP server
 
 DateTime now = DateTime(); //Date time object
 

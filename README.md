@@ -9,6 +9,8 @@ Object DateTime is like date and time variable. It can save time, date, time zon
 
 `DateTime();` Creates new DateTime object with default value 1.1.0001 00:00:00:000.
 
+`DateTime(DateTime &dt);` Creates new DateTime object from another DateTime.
+
 `DateTime(raw_value);` Creates new DateTime object using UTC raw value in milliseconds.
 > Raw DateTime value is signed 8-bytes long number (int64_t) represented as the number of milliseconds elapsed since 1.1.0001 00:00:00:000.
 
@@ -22,9 +24,6 @@ Object DateTime is like date and time variable. It can save time, date, time zon
 `void raw(raw_value, UTC);` Sets new raw DateTime value. If argument UTC is false, inserted raw DateTime value will be to UTC using set time zone and DST offset.
 
 `int64_t raw(UTC);` Returns raw DateTime value in UTC or not.
-
-`copy(DateTime &dt);` Copy all settings from dt instance to actual instance. This function is here instead of assigning, because assignment can copy only raw value. You can also set specific "data" to copy, more info is in .cpp file.
-
 
 `millisecondsUTC(millliseconds);` Sets milliseconds of DateTime in UTC or returns set milliseconds (without argument) in UTC.
 
@@ -110,33 +109,28 @@ Object DateTime is like date and time variable. It can save time, date, time zon
 
 `setDate(hour, minute, second, milliseconds, year, month, day);` Sets date only. This function have to contain year, other arguments are optional.
 
-`setUNIX(uint32_t time, ms);` Sets time using UNIX time format (number of seconds that have elapsed since 1.1.1970). You can also sets milliseconds using parameter ms (optional).
-
 
 `getUTC();` Returns time_s (time structure) in UTC.
 
 ```
-getUTC(short *hour, short *minute, short *second, short *milliseconds, short *year, short *month, short *day);
-getUTC(short *hour, short *minute, short *second, short *milliseconds);
-getUTC(short *hour, short *minute, short *second);
+getUTC(short &hour, short &minute, short &second, short &milliseconds, short &year, short &month, short &day);
+getUTC(short &hour, short &minute, short &second, short &milliseconds);
+getUTC(short &hour, short &minute, short &second);
 ```
-These three functions will fill your variables (have to be short) with time in UTC. To pass argument use & pointer before variable.
+These three functions will fill your variables (have to be short) with time in UTC.
 
-`getDateUTC(short *year, short *month, short *day);` This function will fill your variables (short) with date in UTC. To pass argument use & pointer before variable.
+`getDateUTC(short &year, short &month, short &day);` This function will fill your variables (short) with date in UTC.
 
 `get();` Returns time_s (time structure).
 
 ```
-get(short *hour, short *minute, short *second, short *milliseconds, short *year, short *month, short *day);
-get(short *hour, short *minute, short *second, short *milliseconds);
-get(short *hour, short *minute, short *second);
+get(short &hour, short &minute, short &second, short &milliseconds, short &year, short &month, short &day);
+get(short &hour, short &minute, short &second, short &milliseconds);
+get(short &hour, short &minute, short &second);
 ```
-These three functions will fill your variables (have to be short) with time. To pass argument use & pointer before variable.
+These three functions will fill your variables (have to be short) with time.
 
-`getDate(short *year, short *month, short *day);` This function will fill your variables (short) with date. To pass argument use & pointer before variable.
-
-`getUNIX();` Returns time in UNIX time format (value is in seconds).
-
+`getDate(short &year, short &month, short &day);` This function will fill your variables (short) with date.
 
 `daysUTC();` Returns count of days since 1.1.0001 00:00:00:000 in UTC.
 
@@ -251,13 +245,13 @@ TimeSpan is special variable, that can hold time difference in milliseconds.
 `set(days, hours, minutes, seconds, milliseconds);` Sets new values of TimeSpan. This function have to contain only first argument, others are optional.
 
 ```
-get(long *days, long *hours, long *minutes, long *seconds, long *milliseconds);
-get(long *days, long *hours, long *minutes, long *seconds);
-get(long *days, long *hours, long *minutes);
-get(long *days, long *hours);
-get(long *days);
+get(long &days, long &hours, long &minutes, long &seconds, long &milliseconds);
+get(long &days, long &hours, long &minutes, long &seconds);
+get(long &days, long &hours, long &minutes);
+get(long &days, long &hours);
+get(long &days);
 ```
-These five functions will fill your variables (have to be long) with time. To pass argument use & pointer before variable.
+These five functions will fill your variables (have to be long) with time.
 
 `days(days_);` Sets days of TimeSpan or returns set days (without argument).
 
@@ -310,7 +304,7 @@ ts <= raw_value;
 
 `Alarm();` Creates null Alarm object.
 
-`Alarm(DateTime *dt);` Creates Alarm object with alarm set at time and date from variable DateTime. To pass argument use & pointer before variable. If you change DateTime after this assignment, alarm setting will not change.
+`Alarm(DateTime dt);` Creates Alarm object with alarm set at time and date from variable DateTime. If you change DateTime after this assignment, alarm setting will not change.
 
 `Alarm(time_s tim);` Creates Alarm object with alarm set at time and date from time structure (time_s).
 
@@ -318,23 +312,23 @@ ts <= raw_value;
 
 **Functions:**
 
-`setAlarm(DateTime *dt);` Sets alarm at time and date from variable DateTime. To pass argument use & pointer before variable. If you change DateTime after this assignment, alarm setting will not change.
+`setAlarm(DateTime dt);` Sets alarm at time and date from variable DateTime. If you change DateTime after this assignment, alarm setting will not change.
 
-`setAlarm(time_s *tim);` Sets alarm at time and date from time structure (time_s).
+`setAlarm(time_s tim);` Sets alarm at time and date from time structure (time_s).
 
 `setAlarm(hour, minute, second, mil, year, month, day);` Sets alarm at time and date. This function have to contain at least first two arguments.
 
-`getAlarm(DateTime *dt);` Writes alarm set time and date to DateTime. To pass argument use & pointer before variable.
+`getAlarm(DateTime &dt);` Writes alarm set time and date to DateTime.
 
 `getAlarm();` Returns alarm set time and date as time structure (time_s).
 
 ```
-getAlarm(short *hour, short *minute, short *second, short *mil, short *year, short *month, short *day);
-getAlarm(short *hour, short *minute, short *second, short *mil);
-getAlarm(short *hour, short *minute, short *second);
-getAlarm(short *hour, short *minute);
+getAlarm(short &hour, short &minute, short &second, short &mil, short &year, short &month, short &day);
+getAlarm(short &hour, short &minute, short &second, short &mil);
+getAlarm(short &hour, short &minute, short &second);
+getAlarm(short &hour, short &minute);
 ```
-These four functions will fill your variables (have to be short) with time and date of alarm setting. To pass argument use & pointer before variable.
+These four functions will fill your variables (have to be short) with time and date of alarm setting.
 
 `onDays(byte *days, count);` Sets days of week, when alarm can ring. This setting is usable only when repeating is enabled. First paramenter is byte array of days, for example: `byte days[] = {WD_SUNDAY, WD_FRIDAY};`. Second parameter is count of days in this array. If you change this array after this assignment, set days will change too.
 

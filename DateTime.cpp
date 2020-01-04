@@ -48,15 +48,15 @@ int32_t daysFromYearZero(int32_t year){
  * It also returns how many days elapsed in that year(starts from 1)
  * mil_in is input parameter; year and days_in_year are output parameters
  */
-void yearFromMillis(int64_t *mil_in, short *year, long *days_in_year){
+void yearFromMillis(int64_t &mil_in, short &year, long &days_in_year){
   char data[4];
   long excluded_days = 0;
-  *days_in_year = 0;
-  bool neg = *mil_in < 0;
+  days_in_year = 0;
+  bool neg = mil_in < 0;
   
   //calculate days from milliseconds
-  if(neg) excluded_days = (*mil_in+1)/MILLIS_IN_DAY;
-  else excluded_days = *mil_in/MILLIS_IN_DAY;
+  if(neg) excluded_days = (mil_in+1)/MILLIS_IN_DAY;
+  else excluded_days = mil_in/MILLIS_IN_DAY;
   if(neg) excluded_days-=1;
 
   /* Leap days are every fourth year, but with one exception.
@@ -69,8 +69,8 @@ void yearFromMillis(int64_t *mil_in, short *year, long *days_in_year){
   data[1] = excluded_days/DAYS_IN_100_YRS; //count of centuries
   if(data[1] > 3){ //this is last day of 400 years block and it is leap
     data[1] = 3;
-    if(neg) *days_in_year = 1;
-    else *days_in_year = 366;
+    if(neg) days_in_year = 1;
+    else days_in_year = 366;
   }
   excluded_days = excluded_days - data[1]*DAYS_IN_100_YRS; //rest days after last century (now last leap day is 356th day not 366th) (also act as modulo)
   data[2] = excluded_days/DAYS_IN_4_YRS; //count of 4 year blocks
@@ -78,12 +78,12 @@ void yearFromMillis(int64_t *mil_in, short *year, long *days_in_year){
   data[3] = excluded_days/DAYS_IN_YEAR; //count of years
   if(data[3] > 3){ //this is normal leap day(which is every fourth yeary with some exceptions)
     data[3] = 3;
-    *days_in_year = 366;
+    days_in_year = 366;
   }
-  if(*days_in_year == 0)*days_in_year = abs(excluded_days - data[3]*DAYS_IN_YEAR)+1; //days in year
+  if(days_in_year == 0)days_in_year = abs(excluded_days - data[3]*DAYS_IN_YEAR)+1; //days in year
 
-  *year = data[3] + data[2]*4 + data[1]*100 + data[0]*400; //put it all together
-  if(!neg) *year+=1; //skip year 0
+  year = data[3] + data[2]*4 + data[1]*100 + data[0]*400; //put it all together
+  if(!neg) year+=1; //skip year 0
 }
 
 //Returns true if the year is LEAP
@@ -193,9 +193,9 @@ Alarm::Alarm(){
 }
 
 //Sets alarm at specific Date and Time
-Alarm::Alarm(DateTime *dt){
+Alarm::Alarm(DateTime &dt){
   null_alarm = false;
-  al_time = dt->get();
+  al_time = dt.get();
 }
 
 //Sets alarm at specific Date and Time
@@ -212,24 +212,24 @@ Alarm::Alarm(short hour, short minute, short second, short mil, short year, shor
 
 //Sets alarm at specific Date and Time
 //You do not need to set weekday it will be done automatically
-Alarm::Alarm(time_s tim){
+Alarm::Alarm(time_s &tim){
   null_alarm = false;
   al_time = tim;
 }
 
 //Sets alarm at specific Date and Time
-void Alarm::setAlarm(DateTime *dt){
+void Alarm::setAlarm(DateTime &dt){
   null_alarm = false;
   next_ring_mi = 0;
-  al_time = dt->get();
+  al_time = dt.get();
 }
 
 //Sets alarm at specific Date and Time
 //You do not need to set weekday it will be done automatically
-void Alarm::setAlarm(time_s *tim){
+void Alarm::setAlarm(time_s &tim){
   null_alarm = false;
   next_ring_mi = 0;
-  al_time = *tim;
+  al_time = tim;
 }
 
 //Sets alarm at specific Date and Time
@@ -246,8 +246,8 @@ void Alarm::setAlarm(short hour, short minute, short second, short mil, short ye
 }
 
 //Returns alarm Date and Time
-void Alarm::getAlarm(DateTime *dt){
-  dt->set(al_time);
+void Alarm::getAlarm(DateTime &dt){
+  dt.set(al_time);
 }
 
 //Returns alarm Date and Time
@@ -256,35 +256,35 @@ time_s Alarm::getAlarm(){
 }
 
 //Returns alarm Date and Time
-void Alarm::getAlarm(short *hour, short *minute, short *second, short *mil, short *year, short *month, short *day){
-  *hour = al_time.hour;
-  *minute = al_time.minute;
-  *second = al_time.second;
-  *mil = al_time.milliseconds;
-  *year = al_time.year;
-  *month = al_time.month;
-  *day = al_time.day;
+void Alarm::getAlarm(short &hour, short &minute, short &second, short &mil, short &year, short &month, short &day){
+  hour = al_time.hour;
+  minute = al_time.minute;
+  second = al_time.second;
+  mil = al_time.milliseconds;
+  year = al_time.year;
+  month = al_time.month;
+  day = al_time.day;
 }
 
 //Returns alarm Date and Time
-void Alarm::getAlarm(short *hour, short *minute, short *second, short *mil){
-  *hour = al_time.hour;
-  *minute = al_time.minute;
-  *second = al_time.second;
-  *mil = al_time.milliseconds;
+void Alarm::getAlarm(short &hour, short &minute, short &second, short &mil){
+  hour = al_time.hour;
+  minute = al_time.minute;
+  second = al_time.second;
+  mil = al_time.milliseconds;
 }
 
 //Returns alarm Date and Time
-void Alarm::getAlarm(short *hour, short *minute, short *second){
-  *hour = al_time.hour;
-  *minute = al_time.minute;
-  *second = al_time.second;
+void Alarm::getAlarm(short &hour, short &minute, short &second){
+  hour = al_time.hour;
+  minute = al_time.minute;
+  second = al_time.second;
 }
 
 //Returns alarm Date and Time
-void Alarm::getAlarm(short *hour, short *minute){
-  *hour = al_time.hour;
-  *minute = al_time.minute;
+void Alarm::getAlarm(short &hour, short &minute){
+  hour = al_time.hour;
+  minute = al_time.minute;
 }
 
 //Resets protection which disable "doubled" alarm ring
@@ -476,42 +476,42 @@ void TimeSpan::set(int64_t days, long hours, long minutes, long seconds, long mi
 
 //Use this function, if you want to find out the difference between two DateTimes
 //first millisecond in negative is 0,0,0,0,-1 and first millisecond in positive is 0,0,0,0,0
-void TimeSpan::get(long *days, long *hours, long *minutes, long *seconds, long *milliseconds){
-  *days = raw_time/DAY;
-  *hours = (raw_time%DAY)/HOUR;
-  *minutes = (raw_time%HOUR)/MINUTE;
-  *seconds = (raw_time%MINUTE)/SECOND;
-  *milliseconds = raw_time%SECOND;
+void TimeSpan::get(long &days, long &hours, long &minutes, long &seconds, long &milliseconds){
+  days = raw_time/DAY;
+  hours = (raw_time%DAY)/HOUR;
+  minutes = (raw_time%HOUR)/MINUTE;
+  seconds = (raw_time%MINUTE)/SECOND;
+  milliseconds = raw_time%SECOND;
 }
 
 //Use this function, if you want to find out the difference between two DateTimes
 //first second in negative is 0,0,0,-1 and first second in positive is 0,0,0,0
-void TimeSpan::get(long *days, long *hours, long *minutes, long *seconds){
-  *days = raw_time/DAY;
-  *hours = (raw_time%DAY)/HOUR;
-  *minutes = (raw_time%HOUR)/MINUTE;
-  *seconds = (raw_time%MINUTE)/SECOND;
+void TimeSpan::get(long &days, long &hours, long &minutes, long &seconds){
+  days = raw_time/DAY;
+  hours = (raw_time%DAY)/HOUR;
+  minutes = (raw_time%HOUR)/MINUTE;
+  seconds = (raw_time%MINUTE)/SECOND;
 }
 
 //Use this function, if you want to find out the difference between two DateTimes
 //first minute in negative is 0,0,-1 and first minute in positive is 0,0,0
-void TimeSpan::get(long *days, long *hours, long *minutes){
-  *days = raw_time/DAY;
-  *hours = (raw_time%DAY)/HOUR;
-  *minutes = (raw_time%HOUR)/MINUTE;
+void TimeSpan::get(long &days, long &hours, long &minutes){
+  days = raw_time/DAY;
+  hours = (raw_time%DAY)/HOUR;
+  minutes = (raw_time%HOUR)/MINUTE;
 }
 
 //Use this function, if you want to find out the difference between two DateTimes
 //first hour in negative is 0,-1 and first hour in positive is 0,0
-void TimeSpan::get(long *days, long *hours){
-  *days = raw_time/DAY;
-  *hours = (raw_time%DAY)/HOUR;
+void TimeSpan::get(long &days, long &hours){
+  days = raw_time/DAY;
+  hours = (raw_time%DAY)/HOUR;
 }
 
 //Use this function, if you want to find out the difference between two DateTimes
 //first day in negative is -1 and first day in positive is 0
-void TimeSpan::get(long *days){
-  *days = raw_time/DAY;
+void TimeSpan::get(long &days){
+  days = raw_time/DAY;
 }
 
 //Returns days and/or write new value
@@ -566,10 +566,14 @@ int64_t TimeSpan::raw(){
   return raw_time;
 }
 
-
 //Create null DateTime
 DateTime::DateTime(){
   raw_time = 0; //0001.01.01 00:00:00:000
+}
+
+//Create DateTime from another DateTime
+DateTime::DateTime(DateTime &dt){
+  copy(dt);
 }
 
 DateTime::DateTime(int64_t mil){
@@ -816,47 +820,47 @@ void DateTime::setTimeSpan(int64_t days, long hours, long minutes, long seconds,
 
 //Use this function, if you want to find out the difference between two DateTimes
 //first millisecond in negative is 0,0,0,0,-1 and first millisecond in positive is 0,0,0,0,0
-void DateTime::getTimeSpan(long *days, long *hours, long *minutes, long *seconds, long *milliseconds){
+void DateTime::getTimeSpan(long &days, long &hours, long &minutes, long &seconds, long &milliseconds){
   synchNow(false);
-  *days = raw_time/DAY;
-  *hours = (raw_time%DAY)/HOUR;
-  *minutes = (raw_time%HOUR)/MINUTE;
-  *seconds = (raw_time%MINUTE)/SECOND;
-  *milliseconds = raw_time%SECOND;
+  days = raw_time/DAY;
+  hours = (raw_time%DAY)/HOUR;
+  minutes = (raw_time%HOUR)/MINUTE;
+  seconds = (raw_time%MINUTE)/SECOND;
+  milliseconds = raw_time%SECOND;
 }
 
 //Use this function, if you want to find out the difference between two DateTimes
 //first second in negative is 0,0,0,-1 and first second in positive is 0,0,0,0
-void DateTime::getTimeSpan(long *days, long *hours, long *minutes, long *seconds){
+void DateTime::getTimeSpan(long &days, long &hours, long &minutes, long &seconds){
   synchNow(false);
-  *days = raw_time/DAY;
-  *hours = (raw_time%DAY)/HOUR;
-  *minutes = (raw_time%HOUR)/MINUTE;
-  *seconds = (raw_time%MINUTE)/SECOND;
+  days = raw_time/DAY;
+  hours = (raw_time%DAY)/HOUR;
+  minutes = (raw_time%HOUR)/MINUTE;
+  seconds = (raw_time%MINUTE)/SECOND;
 }
 
 //Use this function, if you want to find out the difference between two DateTimes
 //first minute in negative is 0,0,-1 and first minute in positive is 0,0,0
-void DateTime::getTimeSpan(long *days, long *hours, long *minutes){
+void DateTime::getTimeSpan(long &days, long &hours, long &minutes){
   synchNow(false);
-  *days = raw_time/DAY;
-  *hours = (raw_time%DAY)/HOUR;
-  *minutes = (raw_time%HOUR)/MINUTE;
+  days = raw_time/DAY;
+  hours = (raw_time%DAY)/HOUR;
+  minutes = (raw_time%HOUR)/MINUTE;
 }
 
 //Use this function, if you want to find out the difference between two DateTimes
 //first hour in negative is 0,-1 and first hour in positive is 0,0
-void DateTime::getTimeSpan(long *days, long *hours){
+void DateTime::getTimeSpan(long &days, long &hours){
   synchNow(false);
-  *days = raw_time/DAY;
-  *hours = (raw_time%DAY)/HOUR;
+  days = raw_time/DAY;
+  hours = (raw_time%DAY)/HOUR;
 }
 
 //Use this function, if you want to find out the difference between two DateTimes
 //first day in negative is -1 and first day in positive is 0
-void DateTime::getTimeSpan(long *days){
+void DateTime::getTimeSpan(long &days){
   synchNow(false);
-  *days = raw_time/DAY;
+  days = raw_time/DAY;
 }
 #endif
 
@@ -962,49 +966,49 @@ time_s DateTime::get(){
 }
 
 //Returns values of DateTime in UTC
-void DateTime::getUTC(short *hour, short *minute, short *second, short *mil,short *year, short *month, short *day){
-  readSynchTime(hour, minute, second, mil, year, month, day, true);
+void DateTime::getUTC(short &hour, short &minute, short &second, short &mil,short &year, short &month, short &day){
+  readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, true);
 }
 
 //Returns values of DateTime
-void DateTime::get(short *hour, short *minute, short *second, short *mil,short *year, short *month, short *day){
-  readSynchTime(hour, minute, second, mil, year, month, day, false);
+void DateTime::get(short &hour, short &minute, short &second, short &mil,short &year, short &month, short &day){
+  readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, false);
 }
 
 //Returns values of DateTime in UTC
-void DateTime::getUTC(short *hour, short *minute, short *second, short *mil){
+void DateTime::getUTC(short &hour, short &minute, short &second, short &mil){
   short year,month,day;
-  readSynchTime(hour, minute, second, mil, &year, &month, &day, true);
+  readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, true);
 }
 
 //Returns values of DateTime
-void DateTime::get(short *hour, short *minute, short *second, short *mil){
+void DateTime::get(short &hour, short &minute, short &second, short &mil){
   short year,month,day;
-  readSynchTime(hour, minute, second, mil, &year, &month, &day, false);
+  readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, false);
 }
 
 //Returns values of DateTime in UTC
-void DateTime::getUTC(short *hour, short *minute, short *second){
+void DateTime::getUTC(short &hour, short &minute, short &second){
   short mil,year,month,day;
-  readSynchTime(hour, minute, second, &mil, &year, &month, &day, true);
+  readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, true);
 }
 
 //Returns values of DateTime
-void DateTime::get(short *hour, short *minute, short *second){
+void DateTime::get(short &hour, short &minute, short &second){
   short mil,year,month,day;
-  readSynchTime(hour, minute, second, &mil, &year, &month, &day, false);
+  readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, false);
 }
 
 //Returns values of DateTime in UTC
-void DateTime::getDateUTC(short *year, short *month, short *day){
+void DateTime::getDateUTC(short &year, short &month, short &day){
   short hour, minute, second, mil;
-  readSynchTime(&hour, &minute, &second, &mil, year, month, day, true);
+  readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, true);
 }
 
 //Returns values of DateTime
-void DateTime::getDate(short *year, short *month, short *day){
+void DateTime::getDate(short &year, short &month, short &day){
   short hour, minute, second, mil;
-  readSynchTime(&hour, &minute, &second, &mil, year, month, day, false);
+  readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, false);
 }
 
 //If true, operators will calculate with UTC time
@@ -1739,7 +1743,7 @@ void DateTime::dateTimeToRaw(int64_t *mil_out, short hour, short minute, short s
 void DateTime::rawToDateTime(int64_t *mil_in, short *hour, short *minute, short *second, short *mil, short *year, short *month, short *day){
   if(*year != null_time){
     long days = 0;
-    yearFromMillis(mil_in,year,&days);
+    yearFromMillis(*mil_in,*year,days);
     byte i = 1;
     byte dim; //days in month
     while((dim = daysInMonth(i,*year)) < days && i <= 12){

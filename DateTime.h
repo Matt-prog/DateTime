@@ -169,7 +169,7 @@ typedef struct{ //time structure to hold time
 extern String toStr64(int64_t val);
 //extern String toStr64(uint64_t val);
 extern int32_t daysFromYearZero(int32_t year);
-extern void yearFromMillis(int64_t *mil_in, short *year, long *days_in_year);
+extern void yearFromMillis(int64_t &mil_in, short &year, long &days_in_year);
 extern bool isLeapYear(short year);
 extern byte daysInMonth(byte month, short year = null_time);
 extern uint16_t dayInYear(byte day, byte month, short year = null_time);
@@ -217,11 +217,11 @@ class TimeSpan
   TimeSpan(int64_t days, long hours = 0, long minutes = 0, long seconds = 0, long milliseconds = 0);
 
   void set(int64_t days = 0, long hours = 0, long minutes = 0, long seconds = 0, long milliseconds = 0);
-  void get(long *days, long *hours, long *minutes, long *seconds, long *milliseconds);
-  void get(long *days, long *hours, long *minutes, long *seconds);
-  void get(long *days, long *hours, long *minutes);
-  void get(long *days, long *hours);
-  void get(long *days);
+  void get(long &days, long &hours, long &minutes, long &seconds, long &milliseconds);
+  void get(long &days, long &hours, long &minutes, long &seconds);
+  void get(long &days, long &hours, long &minutes);
+  void get(long &days, long &hours);
+  void get(long &days);
 
   long days(long _days = null_time);
   long hours(long _hours = null_time);
@@ -353,6 +353,7 @@ class DateTime
   public:
   //constructors:
   DateTime();
+  DateTime(DateTime &dt);
   DateTime(int64_t mil);
   DateTime(byte hour, byte minute, byte second);
   DateTime(byte hour, byte minute, byte second, uint16_t mil);
@@ -517,11 +518,11 @@ class DateTime
 
   #ifdef DateTime_SAVE_FLASH || DateTime_USE_TIMESPAN
   void setTimeSpan(int64_t days, long hours = 0, long minutes = 0, long seconds = 0, long milliseconds = 0);
-  void getTimeSpan(long *days, long *hours, long *minutes, long *seconds, long *milliseconds);
-  void getTimeSpan(long *days, long *hours, long *minutes, long *seconds);
-  void getTimeSpan(long *days, long *hours, long *minutes);
-  void getTimeSpan(long *days, long *hours);
-  void getTimeSpan(long *days);
+  void getTimeSpan(long &days, long &hours, long &minutes, long &seconds, long &milliseconds);
+  void getTimeSpan(long &days, long &hours, long &minutes, long &seconds);
+  void getTimeSpan(long &days, long &hours, long &minutes);
+  void getTimeSpan(long &days, long &hours);
+  void getTimeSpan(long &days);
   #endif
 
   void setUNIX(uint32_t tim, short ms);
@@ -536,17 +537,17 @@ class DateTime
   void setDate(short year, short month = null_time, short day = null_time);
 
   time_s getUTC();
-  void getUTC(short *hour, short *minute, short *second, short *mil,short *year, short *month, short *day);
-  void getUTC(short *hour, short *minute, short *second, short *mil);
-  void getUTC(short *hour, short *minute, short *second);
-  void getDateUTC(short *year, short *month, short *day);
+  void getUTC(short &hour, short &minute, short &second, short &mil,short &year, short &month, short &day);
+  void getUTC(short &hour, short &minute, short &second, short &mil);
+  void getUTC(short &hour, short &minute, short &second);
+  void getDateUTC(short &year, short &month, short &day);
 
 
   time_s get();
-  void get(short *hour, short *minute, short *second, short *mil,short *year, short *month, short *day);
-  void get(short *hour, short *minute, short *second, short *mil);
-  void get(short *hour, short *minute, short *second);
-  void getDate(short *year, short *month, short *day);
+  void get(short &hour, short &minute, short &second, short &mil,short &year, short &month, short &day);
+  void get(short &hour, short &minute, short &second, short &mil);
+  void get(short &hour, short &minute, short &second);
+  void getDate(short &year, short &month, short &day);
 
   void operatorsUseUTC(bool _en);
   bool operatorsUseUTC(){return opUTC;};
@@ -665,19 +666,19 @@ class Alarm
   public:
   //constructors:
   Alarm();
-  Alarm(DateTime *dt);
-  Alarm(time_s tim);
+  Alarm(DateTime &dt);
+  Alarm(time_s &tim);
   Alarm(short hour, short minute, short second = 0, short mil = 0, short year = null_time, short month = null_time, short day = null_time);
 
-  void setAlarm(DateTime *dt);
-  void setAlarm(time_s *tim);
+  void setAlarm(DateTime &dt);
+  void setAlarm(time_s &tim);
   void setAlarm(short hour, short minute, short second = 0, short mil = 0, short year = null_time, short month = null_time, short day = null_time);
-  void getAlarm(DateTime *dt);
+  void getAlarm(DateTime &dt);
   time_s getAlarm();
-  void getAlarm(short *hour, short *minute, short *second, short *mil, short *year, short *month, short *day);
-  void getAlarm(short *hour, short *minute, short *second, short *mil);
-  void getAlarm(short *hour, short *minute, short *second);
-  void getAlarm(short *hour, short *minute);
+  void getAlarm(short &hour, short &minute, short &second, short &mil, short &year, short &month, short &day);
+  void getAlarm(short &hour, short &minute, short &second, short &mil);
+  void getAlarm(short &hour, short &minute, short &second);
+  void getAlarm(short &hour, short &minute);
 
   void onDays(/*const*/ byte *_days, byte _count);
   void onDays();
