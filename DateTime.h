@@ -557,7 +557,7 @@ class DateTime
 
   //shift is in minutes
   void DST(bool _en, int8_t _shift = 60);
-  int8_t DST(){return shift;} //Returns DST shift in milliseconds
+  int8_t DST(){return shift;} //Returns DST shift in minutes
   bool isDST(){return shift != 0;} //Returns true if DST is enabled
 
   void format(bool _form); //In this version 12-hour format works only with functions hour and hourUTC and all to String functions
