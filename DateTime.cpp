@@ -1478,7 +1478,7 @@ byte DateTime::NTPhandler(){
         ms = ((unsigned long)(((unsigned int)packetBuffer[36]<<2)|((unsigned int)packetBuffer[37]>>6))*1000)/1024; //milliseconds calculated from fraction
         t1 = t1*SECOND + ms;
 
-        if(t1 < 60000 && t2 < 60000){ //Low value means, that something is bad, because we have received time at year 1900.
+        if(t1 < 60000 || t2 < 60000){ //Low value means, that something is bad, because we have received time at year 1900.
           ntp_err = NTP_BAD_RESPONSE;
           prepared = false;
           ntp_mil = millis() + 5000; //delay 5 seconds before another try
