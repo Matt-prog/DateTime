@@ -1441,7 +1441,7 @@ byte DateTime::NTPhandler(){
       else{
         sendNTPpacket(timeServerIP); // send an NTP packet to a time server
         prepared = true;
-        ntp_mil = millis()+5000; //Setting timeout
+        ntp_mil = millis()+2500; //Setting timeout
       }
     }
     if (prepared){
