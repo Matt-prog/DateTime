@@ -642,6 +642,7 @@ class DateTime
 
   unsigned long sendNTPpacket(IPAddress& address);
   int getTzDST(long* TZ_offset, long* DST_offset);
+  HTTPClient http;
   #endif
 
   #ifndef DateTime_SAVE_FLASH
