@@ -1556,7 +1556,6 @@ int DateTime::updateTZ_DST(unsigned long inter_){
 //Gets timezone and DST offsets in seconds from server worldtimeapi.org
 //Returns httpCode of received message
 int DateTime::getTzDST(long* TZ_offset, long* DST_offset){
-  HTTPClient http;
   http.begin(F("http://worldtimeapi.org/api/ip"));
   
   int httpCode = http.GET();
