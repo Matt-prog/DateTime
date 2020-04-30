@@ -1303,7 +1303,8 @@ String DateTime::String_(short value, byte dec_places){
 
 //Sets NTP server URL address
 void DateTime::setNTPserver(char* addr){
-  ntp_server_url = addr;
+  strncpy(ntp_server_url,addr,NTP_SERVER_URL_SIZE);
+  ntp_server_url[NTP_SERVER_URL_SIZE-1] = 0;
 }
 
 //Returns NTP clock ID
