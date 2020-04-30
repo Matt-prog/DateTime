@@ -572,7 +572,7 @@ class DateTime
   //DO NOT USE TWO FUNCTIONS BELLOW
   void synchCPY(void(*callback)(time_s*),bool *onSynchUTC_, bool *swr_, unsigned int *synch_interval_, unsigned long *synch_millis_);
   #ifdef ESP8266 //code only for ESP8266
-  void NTPsynchCPY(void (*callback)(byte), byte *ntp_err_, int *TZDST_err_, char *ntp_server_url_[], bool *ntp_en_, unsigned int *ntp_synch_int_, WiFiUDP *ntp_, char clck_id_[5], bool *prepared_, unsigned long *TZDST_mil_, unsigned long *ntp_mil_);
+  void NTPsynchCPY(void (*callback)(byte), byte *ntp_err_, int *TZDST_err_, char ntp_server_url_[], bool *ntp_en_, unsigned int *ntp_synch_int_, WiFiUDP *ntp_, char clck_id_[5], bool *prepared_, unsigned long *TZDST_mil_, unsigned long *ntp_mil_);
   #endif
   //////////////////////////////////
 
