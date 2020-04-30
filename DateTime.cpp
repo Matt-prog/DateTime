@@ -632,7 +632,7 @@ void DateTime::copy(DateTime &dt, bool cpy_time, bool cpy_TZ, bool cpy_DST, bool
   }
   #ifdef ESP8266 //code only for ESP8266
   if(cpy_NTP){
-    dt.NTPsynchCPY(_onNTPsynch,&ntp_err,&TZDST_err,&ntp_server_url,&ntp_en,&ntp_synch_int,&ntp,clck_id,&prepared,&TZDST_mil,&ntp_mil);
+    dt.NTPsynchCPY(_onNTPsynch,&ntp_err,&TZDST_err,ntp_server_url,&ntp_en,&ntp_synch_int,&ntp,clck_id,&prepared,&TZDST_mil,&ntp_mil);
   }
   #endif
 }
