@@ -26,6 +26,8 @@ extern "C"
 
 #define DateTime_USE_ALARM //UNCOMMENT TO USE ALARM CLASS
 #define DateTime_USE_MILLISTIMER //UNCOMMENT TO USE MILLIS TIMER CLASS
+  
+#define NTP_SERVER_URL_SIZE 60;
 
 #define null_time -32768
 
@@ -629,7 +631,7 @@ class DateTime
   const unsigned int localPort = 2390; // local port to listen for UDP packets
   byte ntp_err = 0; //Last error from NTP synchronization
   int TZDST_err = 0; //Last error from Time zone and DST update
-  char* ntp_server_url; //NTP server address
+  char ntp_server_url[NTP_SERVER_URL_SIZE]; //NTP server address
   bool ntp_en = false; //True if ntp synchronization is enabled
   unsigned int ntp_synch_int = 120; //ntp synchronization interval in seconds
   WiFiUDP ntp; //NTP server
