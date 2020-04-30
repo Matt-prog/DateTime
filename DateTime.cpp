@@ -647,11 +647,11 @@ void DateTime::synchCPY(void(*callback)(time_s*),bool *onSynchUTC_, bool *swr_, 
 }
 
 #ifdef ESP8266 //code only for ESP8266
-void DateTime::NTPsynchCPY(void (*callback)(byte), byte *ntp_err_, int *TZDST_err_, char *ntp_server_url_[], bool *ntp_en_, unsigned int *ntp_synch_int_, WiFiUDP *ntp_, char clck_id_[5], bool *prepared_, unsigned long *TZDST_mil_, unsigned long *ntp_mil_){
+void DateTime::NTPsynchCPY(void (*callback)(byte), byte *ntp_err_, int *TZDST_err_, char ntp_server_url_[], bool *ntp_en_, unsigned int *ntp_synch_int_, WiFiUDP *ntp_, char clck_id_[5], bool *prepared_, unsigned long *TZDST_mil_, unsigned long *ntp_mil_){
   callback = _onNTPsynch;
   *ntp_err_ = ntp_err;
   *TZDST_err_ = TZDST_err;
-  *ntp_server_url_ = ntp_server_url;
+  strcpy(ntp_server_url_,ntp_server_url);
   *ntp_en_ = ntp_en;
   *ntp_synch_int_ = ntp_synch_int;
   *ntp_ = ntp;
