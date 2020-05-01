@@ -1336,7 +1336,7 @@ long DateTime::remainingNTPsynchTime(){
 //If synchronization is disabled, this will automatically enable it
 void DateTime::NTPenable(bool en){
   if(!synchEN && en)synchEnable(true);
-  if(!ntp_en && en) ntp.begin(localPort);
+  //if(!ntp_en && en) ntp.begin(localPort);
   ntp_en = en;
 }
 
@@ -1353,6 +1353,7 @@ void DateTime::onNTPsynch(void(*callback)(byte)){
 //Sends UDP synchronization request to NTP server
 byte DateTime::NTPsynchNow(){
   if(!prepared){
+    ntp.begin(localPort);
     //get a random server from the pool
     IPAddress timeServerIP;
     if(WiFi.hostByName(ntp_server_url, timeServerIP) != 1){
@@ -1371,6 +1372,7 @@ byte DateTime::NTPsynchNow(){
       if(ntp_mil <= millis()){ //NTP Server timeout
         ntp_err = NTP_TIMEOUT;
         prepared = false;
+        ntp.stop();
         ntp_mil = millis() + 5000; //delay 5 seconds before another try
         if(_onNTPsynch) _onNTPsynch(ntp_err);
       }
@@ -1378,6 +1380,7 @@ byte DateTime::NTPsynchNow(){
     else if(cb < 48){
       ntp_err = NTP_BAD_RESPONSE;
       prepared = false;
+      ntp.stop();
       ntp_mil = millis() + 5000; //delay 5 seconds before another try
       if(_onNTPsynch) _onNTPsynch(ntp_err);
     }
@@ -1420,6 +1423,7 @@ byte DateTime::NTPsynchNow(){
       prepared = false;
       ntp_mil = millis() + ntp_synch_int * SECOND;
       ntp_err = NTP_OK;
+      ntp.stop();
       if(_onNTPsynch) _onNTPsynch(ntp_err);
     }
   }
@@ -1433,6 +1437,7 @@ byte DateTime::NTPhandler(){
   bool WiFi_conn = (WiFi.status() == WL_CONNECTED);
   if(synchEN && ntp_en && WiFi_conn){
     if(!prepared && ntp_mil <= millis()){
+      ntp.begin(localPort);
       //get a random server from the pool
       IPAddress timeServerIP;
       if(WiFi.hostByName(ntp_server_url, timeServerIP) != 1){
@@ -1451,6 +1456,7 @@ byte DateTime::NTPhandler(){
         if(ntp_mil <= millis()){ //NTP Server timeout
           ntp_err = NTP_TIMEOUT;
           prepared = false;
+          ntp.stop();
           ntp_mil = millis() + 5000; //delay 5 seconds before another try
           if(_onNTPsynch) _onNTPsynch(ntp_err);
         }
@@ -1458,6 +1464,7 @@ byte DateTime::NTPhandler(){
       else if(cb < 48){
         ntp_err = NTP_BAD_RESPONSE;
         prepared = false;
+        ntp.stop();
         ntp_mil = millis() + 5000; //delay 5 seconds before another try
         if(_onNTPsynch) _onNTPsynch(ntp_err);
       }
@@ -1500,17 +1507,24 @@ byte DateTime::NTPhandler(){
         prepared = false;
         ntp_mil = millis() + ntp_synch_int * SECOND;
         ntp_err = NTP_OK;
+        ntp.stop();
         if(_onNTPsynch) _onNTPsynch(ntp_err);
       }
     }
   }
-  else if(!WiFi_conn) ntp_err = NTP_NO_INTERNET;
-  else ntp_err = NTP_NONE;
+  else if(!WiFi_conn){
+    ntp_err = NTP_NO_INTERNET;
+    ntp.stop();
+  }
+  else{
+    ntp_err = NTP_NONE;
+    ntp.stop();
+  }
   return ntp_err;
 }
 
 // send an NTP request to the time server at the given address
-unsigned long DateTime::sendNTPpacket(IPAddress& address){
+void DateTime::sendNTPpacket(IPAddress& address){
   // set all bytes in the buffer to 0
   memset(packetBuffer, 0, NTP_PACKET_SIZE);
   // Initialize values needed to form NTP request
@@ -1557,11 +1571,12 @@ int DateTime::updateTZ_DST(unsigned long inter_){
 //Gets timezone and DST offsets in seconds from server worldtimeapi.org
 //Returns httpCode of received message
 int DateTime::getTzDST(long* TZ_offset, long* DST_offset){
-  http.begin(F("http://worldtimeapi.org/api/ip/"));
+  //http.setReuse(false);
+  http.begin(F("http://worldtimeapi.org/api/ip"));
   
   int httpCode = http.GET();
   if (httpCode > 0) {
-    String json = http.getString();
+    const String& json = http.getString();
     int json_length = json.length();
     byte object = 0;
     bool key_started = false;
