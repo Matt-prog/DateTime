@@ -642,7 +642,7 @@ class DateTime
   unsigned long ntp_mil;
   void (*_onNTPsynch)(byte);
 
-  unsigned long sendNTPpacket(IPAddress& address);
+  void sendNTPpacket(IPAddress& address);
   int getTzDST(long* TZ_offset, long* DST_offset);
   HTTPClient http;
   #endif
