@@ -1577,63 +1577,64 @@ int DateTime::getTzDST(long* TZ_offset, long* DST_offset){
   int httpCode = http.GET();
   if (httpCode > 0) {
     const String& json = http.getString();
+    *TZ_offset = 0;
+    *DST_offset = 0;
+    char raw_offset[] = "\"raw_offset\":";
+    char dst_offset[] = "\"dst_offset\":";
     int json_length = json.length();
-    byte object = 0;
-    bool key_started = false;
-    bool key_end = false;
-    bool value_started = false;
-    bool com_en = false;
-    String key = "";
-    String value = "";
+    int j, k = 0; //index in searched word (j - raw_offset, k - dst_offset)
     for(int i = 0; i < json_length; i++){
-      if(json.charAt(i) == '"' || (key_started && key_end && !value_started && json.charAt(i) == ':' && json.charAt(i+1) >= '0' && json.charAt(i+1) <= '9') || (key_started && key_end && value_started && !com_en && (json.charAt(i) == ',' || json.charAt(i) == '}'))){
-        if(value_started){ //end of value found
-          key_started = false;
-          key_end = false;
-          value_started = false;
-          if(key == F("raw_offset")) *TZ_offset = value.toInt();
-          else if(key == F("dst_offset")) *DST_offset = value.toInt();
-  
-          if(json.charAt(i) == '}'){
-            if(object == 0){
-              break; //end of json
-            }
-            object = 0; //end of object
-          }
+      if(j >= 0){
+        if(raw_offset[j] == 0){ //we found it
+          j = -1;
         }
-        else if(key_end){
-          value_started = true;
-          value = "";
-          com_en = json.charAt(i) == '"';
+        else if(raw_offset[j] == json.charAt(i)){
+          j++;
         }
-        else if(key_started) key_end = true;
+        else j = 0;
+      }
+      if(j == -1){ //parsing number
+        if(json.charAt(i) >= '0' && json.charAt(i) <= '9'){
+          *TZ_offset *= 10;
+          *TZ_offset += json.charAt(i) - '0';
+        }
         else{
-          key_started = true;
-          key = "";
+          if(k == -2){
+            http.end();
+            return httpCode;
+          }
+          j = -2;
         }
       }
-      else if(json.charAt(i) == '{' && key_end && !value_started){ //new object found
-        //This part of code is used for objects, but there is no object
-        key_end = false;
-        key_started = false;
-      }
-      else if(json.charAt(i) == '}'){
-        if(object == 0){
-          break; //end of json
+      
+      if(k >= 0){
+        if(dst_offset[k] == 0){ //we found it
+          k = -1;
         }
-        object = 0; //end of object
+        else if(dst_offset[k] == json.charAt(i)){
+          k++;
+        }
+        else k = 0;
       }
-      else if(key_started && !key_end){
-        key += json.charAt(i);
-      }
-      else if(key_started && key_end && value_started){
-        value += json.charAt(i);
+      if(k == -1){ //parsing number
+        if(json.charAt(i) >= '0' && json.charAt(i) <= '9'){
+          *DST_offset *= 10;
+          *DST_offset += json.charAt(i) - '0';
+        }
+        else{
+          if(j == -2){
+            http.end();
+            return httpCode;
+          }
+          k = -2;
+        }
       }
     }
   }
-  http.end();   //Close connection
+  http.end();
   return httpCode;
 }
+
 
 #endif
 
