@@ -1577,8 +1577,6 @@ int DateTime::getTzDST(long* TZ_offset, long* DST_offset){
   int httpCode = http.GET();
   if (httpCode > 0) {
     const String& json = http.getString();
-    *TZ_offset = 0;
-    *DST_offset = 0;
     char raw_offset[] = "\"raw_offset\":";
     char dst_offset[] = "\"dst_offset\":";
     int json_length = json.length();
@@ -1587,6 +1585,7 @@ int DateTime::getTzDST(long* TZ_offset, long* DST_offset){
       if(j >= 0){
         if(raw_offset[j] == 0){ //we found it
           j = -1;
+          *TZ_offset = 0;
         }
         else if(raw_offset[j] == json.charAt(i)){
           j++;
@@ -1610,6 +1609,7 @@ int DateTime::getTzDST(long* TZ_offset, long* DST_offset){
       if(k >= 0){
         if(dst_offset[k] == 0){ //we found it
           k = -1;
+          *DST_offset = 0;
         }
         else if(dst_offset[k] == json.charAt(i)){
           k++;
