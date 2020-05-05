@@ -1557,8 +1557,8 @@ int DateTime::updateTZ_DST_lastError(){
 int DateTime::updateTZ_DST(unsigned long inter_){
   if(TZDST_mil < millis() || inter_ == 0){
     if(inter_ != 0) TZDST_mil = millis()+inter_;
-    long TZ = 0;
-    long DST_ = 0;
+    long TZ = getTimezone()*3600.00;
+    long DST_ = DST()*60;
     TZDST_err = getTzDST(&TZ, &DST_);
     if(TZDST_err == 200){ //OK
       setTimezone(TZ/3600.00);//Set time zone
@@ -1580,60 +1580,36 @@ int DateTime::getTzDST(long* TZ_offset, long* DST_offset){
     char raw_offset[] = "\"raw_offset\":";
     char dst_offset[] = "\"dst_offset\":";
     int json_length = json.length();
-    int j, k = 0; //index in searched word (j - raw_offset, k - dst_offset)
-    for(int i = 0; i < json_length; i++){
-      if(j >= 0){
-        if(raw_offset[j] == 0){ //we found it
-          j = -1;
-          *TZ_offset = 0;
-        }
-        else if(raw_offset[j] == json.charAt(i)){
-          j++;
-        }
-        else j = 0;
-      }
-      if(j == -1){ //parsing number
-        if(json.charAt(i) >= '0' && json.charAt(i) <= '9'){
+    int ind = json.indexOf(F("\"raw_offset\":"));
+    if(ind >= 0){
+      *TZ_offset = 0;
+      ind += 13;  //length of searched string
+      for(; ind < json_length; ind++){
+        if(json.charAt(ind) >= '0' && json.charAt(ind) <= '9'){
           *TZ_offset *= 10;
-          *TZ_offset += json.charAt(i) - '0';
+          *TZ_offset += (json.charAt(ind) - '0');
         }
-        else{
-          if(k == -2){
-            http.end();
-            return httpCode;
-          }
-          j = -2;
-        }
+        else break;
       }
-      
-      if(k >= 0){
-        if(dst_offset[k] == 0){ //we found it
-          k = -1;
-          *DST_offset = 0;
-        }
-        else if(dst_offset[k] == json.charAt(i)){
-          k++;
-        }
-        else k = 0;
-      }
-      if(k == -1){ //parsing number
-        if(json.charAt(i) >= '0' && json.charAt(i) <= '9'){
+    }
+
+    ind = json.indexOf(F("\"dst_offset\":"));
+    if(ind >= 0){
+      *DST_offset = 0;
+      ind += 13; //length of searched string
+      for(; ind < json_length; ind++){
+        if(json.charAt(ind) >= '0' && json.charAt(ind) <= '9'){
           *DST_offset *= 10;
-          *DST_offset += json.charAt(i) - '0';
+          *DST_offset += (json.charAt(ind) - '0');
         }
-        else{
-          if(j == -2){
-            http.end();
-            return httpCode;
-          }
-          k = -2;
-        }
+        else break;
       }
     }
   }
   http.end();
   return httpCode;
 }
+
 
 
 #endif
