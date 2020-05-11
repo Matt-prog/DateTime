@@ -1104,9 +1104,11 @@ bool DateTime::isAM(){
 #ifndef DateTime_SAVE_FLASH //Functions bellow works only if save flash mode is not activated
 //Returns time in long form text (for example: 12h:5min:5s:400ms)
 //First parameter sets text form (for example H_M_S_m)
-//Second sets char separator between values
-//Third sets if value will be in UTC
-String DateTime::toLongTimeString(byte _form,const char separator, bool UTC){
+//Second sets first separator between values
+//Third sets second separator between values
+//Fourth sets third separator between values
+//Fifth sets if value will be in UTC
+String DateTime::toLongTimeString(byte _form, const char *separator1, const char *separator2, const char *separator3, bool UTC){
   if(_form < HH_MM_SS_mmm || _form > SS_mmm) _form = H_M_S;
   short hour, minute, second, mil, year, month, day;
   readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, UTC);
@@ -1126,27 +1128,29 @@ String DateTime::toLongTimeString(byte _form,const char separator, bool UTC){
   }
   else pm=F("h");
   switch(_form){
-    case HH_MM_SS_mmm: return String_(hour,2)+pm+separator+String_(minute,2)+f_min+separator+String_(second,2)+f_s+separator+String_(mil,3)+f_ms;
-    case H_M_S_m: return String(hour)+pm+separator+String(minute)+f_min+separator+String(second)+f_s+separator+String(mil)+f_ms;
-    case HH_MM_SS: return String_(hour,2)+pm+separator+String_(minute,2)+f_min+separator+String_(second,2)+f_s;
-    case H_M_S: return String(hour)+pm+separator+String(minute)+f_min+separator+String(second)+f_s;
-    case HH_MM: return String_(hour,2)+pm+separator+String_(minute,2)+f_min;
-    case H_M: return String(hour)+pm+separator+String(minute)+f_min;
-    case M_S: return String(minute)+f_min+separator+String(second)+f_s;
-    case MM_SS: return String_(minute,2)+f_min+separator+String_(second,2)+f_s;
-    case M_S_m: return String(minute)+f_min+separator+String(second)+f_s+separator+String(mil)+f_ms;
-    case MM_SS_mmm: return String_(minute,2)+f_min+separator+String_(second,2)+f_s+separator+String_(mil,2)+f_ms;
-    case S_m: return String(second)+f_s+separator+String(mil)+f_ms;
-    case SS_mmm: return String_(second,2)+f_s+separator+String_(mil,2)+f_ms;
+    case HH_MM_SS_mmm: return String_(hour,2)+pm+separator1+String_(minute,2)+f_min+separator2+String_(second,2)+f_s+separator3+String_(mil,3)+f_ms;
+    case H_M_S_m: return String(hour)+pm+separator1+String(minute)+f_min+separator2+String(second)+f_s+separator3+String(mil)+f_ms;
+    case HH_MM_SS: return String_(hour,2)+pm+separator1+String_(minute,2)+f_min+separator2+String_(second,2)+f_s;
+    case H_M_S: return String(hour)+pm+separator1+String(minute)+f_min+separator2+String(second)+f_s;
+    case HH_MM: return String_(hour,2)+pm+separator1+String_(minute,2)+f_min;
+    case H_M: return String(hour)+pm+separator1+String(minute)+f_min;
+    case M_S: return String(minute)+f_min+separator1+String(second)+f_s;
+    case MM_SS: return String_(minute,2)+f_min+separator1+String_(second,2)+f_s;
+    case M_S_m: return String(minute)+f_min+separator1+String(second)+f_s+separator2+String(mil)+f_ms;
+    case MM_SS_mmm: return String_(minute,2)+f_min+separator1+String_(second,2)+f_s+separator2+String_(mil,2)+f_ms;
+    case S_m: return String(second)+f_s+separator1+String(mil)+f_ms;
+    case SS_mmm: return String_(second,2)+f_s+separator1+String_(mil,2)+f_ms;
   }
 }
 
 
 //Returns time in short form text (for example: 12:5:5:400)
 //First parameter sets text form (for example H_M_S_m)
-//Second sets char separator between values
-//Third sets if value will be in UTC
-String DateTime::toShortTimeString(byte _form,const char separator, bool UTC){
+//Second sets first separator between values
+//Third sets second separator between values
+//Fourth sets third separator between values
+//Fifth sets if value will be in UTC
+String DateTime::toShortTimeString(byte _form, const char *separator1, const char *separator2, const char *separator3, bool UTC){
   if(_form < HH_MM_SS_mmm || _form > SS_mmm) _form = H_M_S;
   short hour, minute, second, mil, year, month, day;
   readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, UTC);
@@ -1162,26 +1166,27 @@ String DateTime::toShortTimeString(byte _form,const char separator, bool UTC){
     }
   }
   switch(_form){
-    case HH_MM_SS_mmm: return String_(hour,2)+pm+separator+String_(minute,2)+separator+String_(second,2)+separator+String_(mil,3);
-    case H_M_S_m: return String(hour)+pm+separator+String(minute)+separator+String(second)+separator+String(mil);
-    case HH_MM_SS: return String_(hour,2)+pm+separator+String_(minute,2)+separator+String_(second,2);
-    case H_M_S: return String(hour)+pm+separator+String(minute)+separator+String(second);
-    case HH_MM: return String_(hour,2)+pm+separator+String_(minute,2);
-    case H_M: return String(hour)+pm+separator+String(minute);
-    case M_S: return String(minute)+separator+String(second);
-    case MM_SS: return String_(minute,2)+separator+String_(second,2);
-    case M_S_m: return String(minute)+separator+String(second)+separator+String(mil);
-    case MM_SS_mmm: return String_(minute,2)+separator+String_(second,2)+separator+String_(mil,3);
-    case S_m: return String(second)+separator+String(mil);
-    case SS_mmm: return String_(second,2)+separator+String_(mil,3);
+    case HH_MM_SS_mmm: return String_(hour,2)+pm+separator1+String_(minute,2)+separator2+String_(second,2)+separator3+String_(mil,3);
+    case H_M_S_m: return String(hour)+pm+separator1+String(minute)+separator2+String(second)+separator3+String(mil);
+    case HH_MM_SS: return String_(hour,2)+pm+separator1+String_(minute,2)+separator2+String_(second,2);
+    case H_M_S: return String(hour)+pm+separator1+String(minute)+separator2+String(second);
+    case HH_MM: return String_(hour,2)+pm+separator1+String_(minute,2);
+    case H_M: return String(hour)+pm+separator1+String(minute);
+    case M_S: return String(minute)+separator1+String(second);
+    case MM_SS: return String_(minute,2)+separator1+String_(second,2);
+    case M_S_m: return String(minute)+separator1+String(second)+separator2+String(mil);
+    case MM_SS_mmm: return String_(minute,2)+separator1+String_(second,2)+separator2+String_(mil,3);
+    case S_m: return String(second)+separator1+String(mil);
+    case SS_mmm: return String_(second,2)+separator1+String_(mil,3);
   }
 }
 
 //Returns date in long form text (for example: 1.January.2019)
 //First parameter sets text form (for example D_MM_YYYY)
-//Second sets char separator between values
-//Third sets if value will be in UTC
-String DateTime::toLongDateString(byte _form,const char separator, bool UTC){
+//Second sets first separator between values
+//Third sets second separator between values
+//Fourth sets if value will be in UTC
+String DateTime::toLongDateString(byte _form, const char *separator1, const char *separator2, bool UTC){
   if(_form < DD_MM_YYYY || _form > M_D) _form = D_MM_YYYY;
   short hour, minute, second, mil, year, month, day;
   readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, UTC);
@@ -1205,83 +1210,84 @@ String DateTime::toLongDateString(byte _form,const char separator, bool UTC){
   if(year < 0) BC = F("B.C");
   switch(_form){
     case YYYY_MM_DD:
-    case YYYY_M_DD: return String(year)+BC+separator+month_+separator+String_(day,2);
+    case YYYY_M_DD: return String(year)+BC+separator1+month_+separator2+String_(day,2);
     case YY_M_D:
-    case YY_MM_D: return String_(year,2)+BC+separator+month_+separator+String(day);
+    case YY_MM_D: return String_(year,2)+BC+separator1+month_+separator2+String(day);
     case YY_M_DD:
-    case YY_MM_DD: return String_(year,2)+BC+separator+month+separator+String(day,2);
+    case YY_MM_DD: return String_(year,2)+BC+separator1+month+separator2+String(day,2);
     case DD_MM_YYYY:
-    case DD_M_YYYY: return String_(day,2)+separator+month_+separator+String(year)+BC;
+    case DD_M_YYYY: return String_(day,2)+separator1+month_+separator2+String(year)+BC;
     case D_M_YY: 
-    case D_MM_YY: return String(day)+separator+month_+separator+String_(year,2)+BC;
+    case D_MM_YY: return String(day)+separator1+month_+separator2+String_(year,2)+BC;
     case DD_M_YY:
-    case DD_MM_YY: return String_(day,2)+separator+month_+separator+String_(year,2)+BC;
+    case DD_MM_YY: return String_(day,2)+separator1+month_+separator2+String_(year,2)+BC;
     case YYYY_M_D:
-    case YYYY_MM_D: return String(year)+BC+separator+month_+separator+String(day);
+    case YYYY_MM_D: return String(year)+BC+separator1+month_+separator2+String(day);
     case D_M_YYYY:
-    case D_MM_YYYY: return String(day)+separator+month_+separator+String(year)+BC;
+    case D_MM_YYYY: return String(day)+separator1+month_+separator2+String(year)+BC;
     case D_M:
-    case D_MM: return String(day)+separator+month_;
+    case D_MM: return String(day)+separator1+month_;
     case DD_M:
-    case DD_MM: return String_(day,2)+separator+month_;
+    case DD_MM: return String_(day,2)+separator1+month_;
     case M_YY:
-    case MM_YY: return month_+separator+String_(year,2)+BC;
+    case MM_YY: return month_+separator1+String_(year,2)+BC;
     case M_YYYY:
-    case MM_YYYY: return month_+separator+String(year)+BC;
+    case MM_YYYY: return month_+separator1+String(year)+BC;
     case M_D:
-    case MM_D: return month_+separator+String(day);
+    case MM_D: return month_+separator1+String(day);
     case M_DD:
-    case MM_DD: return month_+separator+String_(day,2);
+    case MM_DD: return month_+separator1+String_(day,2);
     case YY_M:
-    case YY_MM: return String_(year,2)+BC+separator+month_;
+    case YY_MM: return String_(year,2)+BC+separator1+month_;
     case YYYY_M:
-    case YYYY_MM: return String(year)+BC+separator+month_;
+    case YYYY_MM: return String(year)+BC+separator1+month_;
   }
 }
 
 //Returns date in short form text (for example: 1.1.2019)
 //First parameter sets text form (for example D_M_YYYY)
-//Second sets char separator between values
-//Third sets if value will be in UTC
-String DateTime::toShortDateString(byte _form,const char separator, bool UTC){
+//Second sets first separator between values
+//Third sets second separator between values
+//Fourth sets if value will be in UTC
+String DateTime::toShortDateString(byte _form, const char *separator1, const char *separator2, bool UTC){
   if(_form < DD_MM_YYYY || _form > M_D) _form = D_M_YYYY;
   short hour, minute, second, mil, year, month, day;
   readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, UTC);
   String BC = "";
   if(year < 0) BC = F("B.C");
   switch(_form){
-    case YYYY_MM_DD: return String(year)+BC+separator+String_(month,2)+separator+String_(day,2);
-    case YYYY_M_DD: return String(year)+BC+separator+String(month)+separator+String_(day,2);
-    case YY_MM_D: return String_(year,2)+BC+separator+String_(month,2)+separator+String(day);
-    case YY_M_D: return String_(year,2)+BC+separator+String(month)+separator+String(day);
-    case YY_MM_DD: return String_(year,2)+BC+separator+String_(month,2)+separator+String_(day,2);
-    case YY_M_DD: return String_(year,2)+BC+separator+String(month)+separator+String_(day,2);
-    case DD_MM_YYYY: return String_(day,2)+separator+String_(month,2)+separator+String(year)+BC;
-    case DD_M_YYYY: return String_(day,2)+separator+String(month)+separator+String(year)+BC;
-    case D_MM_YY: return String(day)+separator+String_(month,2)+separator+String_(year,2)+BC;
-    case D_M_YY: return String(day)+separator+String(month)+separator+String_(year,2)+BC;
-    case DD_MM_YY: return String_(day,2)+separator+String_(month,2)+separator+String_(year,2)+BC;
-    case DD_M_YY: return String_(day,2)+separator+String(month)+separator+String_(year,2)+BC;
-    case YYYY_MM_D: return String(year)+BC+separator+String_(month,2)+separator+String(day);
-    case YYYY_M_D: return String(year)+BC+separator+String(month)+separator+String(day);
-    case D_MM_YYYY: return String(day)+separator+String_(month,2)+separator+String(year)+BC;
-    case D_M_YYYY: return String(day)+separator+String(month)+separator+String(year)+BC;
-    case D_MM: return String(day)+separator+String_(month,2);
-    case D_M: return String(day)+separator+String(month);
-    case DD_MM: return String_(day,2)+separator+String_(month,2);
-    case DD_M: return String_(day,2)+separator+String(month);
-    case MM_YY: return String_(month,2)+separator+String_(year,2)+BC;
-    case M_YY: return String(month)+separator+String_(year,2)+BC;
-    case M_YYYY: return String(month)+separator+String(year)+BC;
-    case MM_YYYY: return String_(month,2)+separator+String(year)+BC;
-    case MM_D: return String_(month,2)+separator+String(day);
-    case M_D: return String(month)+separator+String(day);
-    case MM_DD: return String_(month,2)+separator+String_(day,2);
-    case M_DD: return String(month)+separator+String_(day,2);
-    case YY_MM: return String_(year,2)+BC+separator+String_(month,2);
-    case YY_M: return String_(year,2)+BC+separator+String(month);
-    case YYYY_M: return String(year)+BC+separator+String(month);
-    case YYYY_MM: return String(year)+BC+separator+String_(month,2);
+    case YYYY_MM_DD: return String(year)+BC+separator1+String_(month,2)+separator2+String_(day,2);
+    case YYYY_M_DD: return String(year)+BC+separator1+String(month)+separator2+String_(day,2);
+    case YY_MM_D: return String_(year,2)+BC+separator1+String_(month,2)+separator2+String(day);
+    case YY_M_D: return String_(year,2)+BC+separator1+String(month)+separator2+String(day);
+    case YY_MM_DD: return String_(year,2)+BC+separator1+String_(month,2)+separator2+String_(day,2);
+    case YY_M_DD: return String_(year,2)+BC+separator1+String(month)+separator2+String_(day,2);
+    case DD_MM_YYYY: return String_(day,2)+separator1+String_(month,2)+separator2+String(year)+BC;
+    case DD_M_YYYY: return String_(day,2)+separator1+String(month)+separator2+String(year)+BC;
+    case D_MM_YY: return String(day)+separator1+String_(month,2)+separator2+String_(year,2)+BC;
+    case D_M_YY: return String(day)+separator1+String(month)+separator2+String_(year,2)+BC;
+    case DD_MM_YY: return String_(day,2)+separator1+String_(month,2)+separator2+String_(year,2)+BC;
+    case DD_M_YY: return String_(day,2)+separator1+String(month)+separator2+String_(year,2)+BC;
+    case YYYY_MM_D: return String(year)+BC+separator1+String_(month,2)+separator2+String(day);
+    case YYYY_M_D: return String(year)+BC+separator1+String(month)+separator2+String(day);
+    case D_MM_YYYY: return String(day)+separator1+String_(month,2)+separator2+String(year)+BC;
+    case D_M_YYYY: return String(day)+separator1+String(month)+separator2+String(year)+BC;
+    case D_MM: return String(day)+separator1+String_(month,2);
+    case D_M: return String(day)+separator1+String(month);
+    case DD_MM: return String_(day,2)+separator1+String_(month,2);
+    case DD_M: return String_(day,2)+separator1+String(month);
+    case MM_YY: return String_(month,2)+separator1+String_(year,2)+BC;
+    case M_YY: return String(month)+separator1+String_(year,2)+BC;
+    case M_YYYY: return String(month)+separator1+String(year)+BC;
+    case MM_YYYY: return String_(month,2)+separator1+String(year)+BC;
+    case MM_D: return String_(month,2)+separator1+String(day);
+    case M_D: return String(month)+separator1+String(day);
+    case MM_DD: return String_(month,2)+separator1+String_(day,2);
+    case M_DD: return String(month)+separator1+String_(day,2);
+    case YY_MM: return String_(year,2)+BC+separator1+String_(month,2);
+    case YY_M: return String_(year,2)+BC+separator1+String(month);
+    case YYYY_M: return String(year)+BC+separator1+String(month);
+    case YYYY_MM: return String(year)+BC+separator1+String_(month,2);
   }
 }
 
