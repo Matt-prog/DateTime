@@ -874,6 +874,7 @@ void DateTime::setUNIX(uint32_t tim, short ms){
 //Returns time in UNIX time format (time in seconds elapsed from 1.1.1970)
 //This value can be easly converted to time_t (e.g. time_t now = dt.getUNIX();)
 uint32_t DateTime::getUNIX(){
+  synchNow(false);
   return (raw_time - time_base1970)/SECOND;
 }
 
