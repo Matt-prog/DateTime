@@ -66,8 +66,8 @@ void loop() {
 
 void printTime(){
   //Prints time and date every second
-  Serial.println(now.toLongDateString(D_M_YYYY,'.'));
-  Serial.println(now.toShortTimeString(H_M_S_m,':'));
+  Serial.println(now.toLongDateString(D_M_YYYY,"."));
+  Serial.println(now.toShortTimeString(H_M_S_m,":"));
   Serial.println();
 }
 
