@@ -577,10 +577,49 @@ class DateTime
   //////////////////////////////////
 
   #ifndef DateTime_SAVE_FLASH
-  String toLongTimeString(byte _form = H_M_S,const char separator = ':', bool UTC = false);
-  String toShortTimeString(byte _form = H_M_S,const char separator = ':', bool UTC = false);
-  String toLongDateString(byte _form = YY_M_D,const char separator = '.', bool UTC = false);
-  String toShortDateString(byte _form = YY_M_D,const char separator = '.', bool UTC = false);
+  String toLongTimeString(byte _form, const char *separator1, const char *separator2, const char *separator3, bool UTC = false);
+  String toShortTimeString(byte _form, const char *separator1, const char *separator2, const char *separator3, bool UTC = false);
+  String toLongDateString(byte _form, const char *separator1, const char *separator2, bool UTC = false);
+  String toShortDateString(byte _form, const char *separator1, const char *separator2, bool UTC = false);
+  
+  String toLongTimeString(byte _form = H_M_S, const char *separator1 = ":", bool UTC = false){
+     return toLongTimeString(_form, separator1, separator1, separator1, UTC);
+  }
+  String toShortTimeString(byte _form = H_M_S, const char *separator1 = ":", bool UTC = false){
+    return toShortTimeString(_form, separator1, separator1, separator1, UTC);
+  }
+  String toLongDateString(byte _form = YY_M_D, const char *separator1 = ".", bool UTC = false){
+    return toLongDateString(_form, separator1, separator1, UTC);
+  }
+  String toShortDateString(byte _form = YY_M_D, const char *separator1 = ".", bool UTC = false){
+    return toShortDateString(_form, separator1, separator1, UTC);
+  }
+  
+  String toLongTimeString(byte _form, String separator1, String separator2, String separator3, bool UTC = false){
+     return toLongTimeString(_form, separator1.c_str(), separator2.c_str(), separator3.c_str(), UTC);
+  }
+  String toShortTimeString(byte _form, String separator1, String separator2, String separator3, bool UTC = false){
+    return toShortTimeString(_form, separator1.c_str(), separator2.c_str(), separator3.c_str(), UTC);
+  }
+  String toLongDateString(byte _form, String separator1, String separator2, bool UTC = false){
+    return toLongDateString(_form, separator1.c_str(), separator2.c_str(), UTC);
+  }
+  String toShortDateString(byte _form, String separator1, String separator2, bool UTC = false){
+    return toShortDateString(_form, separator1.c_str(), separator2.c_str(), UTC);
+  }
+  
+  String toLongTimeString(byte _form, String separator1, bool UTC = false){
+     return toLongTimeString(_form, separator1.c_str(), separator1.c_str(), separator1.c_str(), UTC);
+  }
+  String toShortTimeString(byte _form, String separator1, bool UTC = false){
+    return toShortTimeString(_form, separator1.c_str(), separator1.c_str(), separator1.c_str(), UTC);
+  }
+  String toLongDateString(byte _form, String separator1, bool UTC = false){
+    return toLongDateString(_form, separator1.c_str(), separator1.c_str(), UTC);
+  }
+  String toShortDateString(byte _form, String separator1, bool UTC = false){
+    return toShortDateString(_form, separator1.c_str(), separator1.c_str(), UTC);
+  }
   #endif
 
   void onSynch(void(*callback)(time_s*), bool UTC = false, bool write_raw = false);
