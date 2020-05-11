@@ -91,9 +91,9 @@ void ring(time_s present_time){
 void everySecond(){
   //Prints current time
   Serial.print("Now: ");
-  Serial.print(time1.toShortTimeString(H_M_S_m,':'));
+  Serial.print(time1.toShortTimeString(H_M_S_m,":"));
   Serial.print(" ");
-  Serial.println(time1.toLongDateString(D_MM_YYYY,'.'));
+  Serial.println(time1.toLongDateString(D_MM_YYYY,"."));
 }
 
 /* Warning: Alarm may enable protection which blocks ringing in the same day more than one time.
