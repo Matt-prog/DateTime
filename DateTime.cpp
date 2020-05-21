@@ -403,7 +403,7 @@ bool Alarm::handleAlarm(short hour, short minute, short second, short mil, short
         int8_t diff = 0;
 
         //calculating weekday from data
-        if(now.weekday == null_time) now.weekday = (((daysFromYearZero(year) + dayInYear(day,month,year)) + WD_CALIB) % 7)+1;
+        if(now.weekday == null_time) now.weekday = (((daysFromYearZero(year) + dayInYear(day,month,year)-1) + WD_CALIB) % 7)+1;
         
         for(byte i = 0; i < days_cnt; i++){
           if(days[i] >= 1 && days[i] <= 7){ //validate days
@@ -577,6 +577,7 @@ int64_t TimeSpan::raw(){
 //Create null DateTime
 DateTime::DateTime(){
   raw_time = 0; //0001.01.01 00:00:00:000
+  synch_millis = millis();
 }
 
 //Create DateTime from another DateTime
@@ -586,25 +587,29 @@ DateTime::DateTime(DateTime &dt){
 
 DateTime::DateTime(int64_t mil){
   raw_time = mil;
+  synch_millis = millis();
 }
 
 DateTime::DateTime(byte hour, byte minute, byte second){
   dateTimeToRaw(&raw_time, hour, minute, second, 0, 1,1,1);
+  synch_millis = millis();
 }
 
 DateTime::DateTime(byte hour, byte minute, byte second, uint16_t mil){
   dateTimeToRaw(&raw_time, hour, minute, second, mil, 1,1,1);
+  synch_millis = millis();
 }
 
 DateTime::DateTime(byte hour, byte minute, byte second, uint16_t mil, int16_t year, byte month, byte day){
   dateTimeToRaw(&raw_time, hour, minute, second, mil, year, month, day);
+  synch_millis = millis();
 }
 
 //Sets raw value in milliseconds
 //Input value UTC is optional and it will convert raw value into UTC by set timezone and DST
 void DateTime::raw(int64_t _raw, bool UTC){
   raw_time = _raw;
-  if(!UTC) raw_time = raw_time - (long)(HOUR_IN_MILLIS*timezone) - shift*MINUTE;
+  if(!UTC) raw_time = raw_time - TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) - shift*MINUTE;
   if(synchEN)synch_millis = millis(); //set new interval timer value, because this is same as synchronization
 }
 
@@ -613,7 +618,7 @@ void DateTime::raw(int64_t _raw, bool UTC){
 //Raw value is count of milliseconds from date 0001.01.01 and time 00:00:00:001
 int64_t DateTime::raw(bool UTC){
   synchNow(false);
-  if(!UTC) return raw_time + (long)(HOUR_IN_MILLIS*timezone) + shift*MINUTE + (millis()-synch_millis);
+  if(!UTC) return raw_time + TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) + shift*MINUTE + (millis()-synch_millis);
   return raw_time + (millis()-synch_millis);
 }
 
@@ -739,12 +744,12 @@ byte DateTime::minute(short mi){
 
 //Sets and/or return second in UTC
 byte DateTime::secondUTC(short se){
-  return getWriteOne(se,GWO_MINUTE, true);
+  return getWriteOne(se,GWO_SECOND, true);
 }
 
 //Sets and/or return second
 byte DateTime::second(short se){
-  return getWriteOne(se,GWO_MINUTE, false);
+  return getWriteOne(se,GWO_SECOND, false);
 }
 
 //Sets and/or return year in UTC
@@ -759,12 +764,12 @@ int16_t DateTime::year(short ye){
 
 //Sets and/or return month in UTC
 byte DateTime::monthUTC(short mo){
-  return getWriteOne(mo,GWO_MINUTE, true);
+  return getWriteOne(mo,GWO_MONTH, true);
 }
 
 //Sets and/or return month
 byte DateTime::month(short mo){
-  return getWriteOne(mo,GWO_MINUTE, false);
+  return getWriteOne(mo,GWO_MONTH, false);
 }
 
 //WARNING: use this function (for writing) after monthUTC, never otherwise,
@@ -772,7 +777,7 @@ byte DateTime::month(short mo){
 //         so it can cause bug
 //Sets and/or return day in UTC
 byte DateTime::dayUTC(short da){
-  return getWriteOne(da,GWO_MINUTE, true);
+  return getWriteOne(da,GWO_DAY, true);
 }
 
 //WARNING: use this function (for writing) after month, never otherwise,
@@ -780,7 +785,7 @@ byte DateTime::dayUTC(short da){
 //         so it can cause bug
 //Sets and/or return day
 byte DateTime::day(short da){
-  return getWriteOne(da,GWO_MINUTE, false);
+  return getWriteOne(da,GWO_DAY, false);
 }
 
 //Sets and/or return weekday in UTC
@@ -813,8 +818,8 @@ long DateTime::daysUTC(){
 //First day in negative is day -1 and first day in positive is 0 
 long DateTime::days(){
   synchNow(false);
-  if(raw_time < 0) return((raw_time + 1 + (long)(HOUR_IN_MILLIS*timezone) + shift*MINUTE + (millis()-synch_millis))/MILLIS_IN_DAY)-1;
-  else return (raw_time + (long)(HOUR_IN_MILLIS*timezone) + shift*MINUTE + (millis()-synch_millis))/MILLIS_IN_DAY;
+  if(raw_time < 0) return((raw_time + 1 + TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) + shift*MINUTE + (millis()-synch_millis))/MILLIS_IN_DAY)-1;
+  else return (raw_time + TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) + shift*MINUTE + (millis()-synch_millis))/MILLIS_IN_DAY;
 }
 
 
@@ -916,6 +921,7 @@ void DateTime::setUTC(short hour, short minute, short second, short mil, short y
     if(day == null_time) day = data[6];
   }
   dateTimeToRaw(&raw_time, hour, minute, second, mil, year, month, day);
+  synch_millis = millis();
 }
 
 //Sets new DateTime values
@@ -932,7 +938,8 @@ void DateTime::set(short hour, short minute, short second, short mil, short year
     if(day == null_time) day = data[6];
   }
   dateTimeToRaw(&raw_time, hour, minute, second, mil, year, month, day);
-  raw_time = raw_time - (long)(HOUR_IN_MILLIS*timezone) - shift*MINUTE; //write UTC
+  synch_millis = millis();
+  raw_time = raw_time - TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) - shift*MINUTE; //write UTC
 }
 
 //Sets new Date in UTC
@@ -942,6 +949,7 @@ void DateTime::setDateUTC(short year, short month, short day){
   if(year == null_time) year = data[4];
   if(month  == null_time) month = data[5];
   if(day == null_time) day = data[6];
+  synch_millis = millis();
   dateTimeToRaw(&raw_time, data[0], data[1], data[2], data[3], year, month, day);
 }
 
@@ -953,14 +961,15 @@ void DateTime::setDate(short year, short month, short day){
   if(month  == null_time) month = data[5];
   if(day == null_time) day = data[6];
   dateTimeToRaw(&raw_time, data[0], data[1], data[2], data[3], year, month, day);
-  raw_time = raw_time - (long)(HOUR_IN_MILLIS*timezone) - shift*MINUTE; //write UTC
+  synch_millis = millis();
+  raw_time = raw_time - TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) - shift*MINUTE; //write UTC
 }
 
 //Returns time structure (time_s) in UTC
 time_s DateTime::getUTC(){
   short data[7] = {0};
   readSynchTime(&data[0],&data[1],&data[2],&data[3],&data[4],&data[5],&data[6], true);
-  int32_t weekday = (((daysFromYearZero(data[4]) + dayInYear(data[6],data[5],data[4])) + WD_CALIB) % 7)+1;
+  int32_t weekday = (((daysFromYearZero(data[4]) + dayInYear(data[6],data[5],data[4])-1) + WD_CALIB) % 7)+1;
   time_s ret;
   ret.hour = data[0];
   ret.minute = data[1];
@@ -977,7 +986,7 @@ time_s DateTime::getUTC(){
 time_s DateTime::get(){
   short data[7] = {0};
   readSynchTime(&data[0],&data[1],&data[2],&data[3],&data[4],&data[5],&data[6], false);
-  int32_t weekday = (((daysFromYearZero(data[4]) + dayInYear(data[6],data[5],data[4])) + WD_CALIB) % 7)+1;
+  int32_t weekday = (((daysFromYearZero(data[4]) + dayInYear(data[6],data[5],data[4])-1) + WD_CALIB) % 7)+1;
   time_s ret;
   ret.hour = data[0];
   ret.minute = data[1];
@@ -1653,13 +1662,12 @@ int DateTime::getTzDST(long* TZ_offset, long* DST_offset){
 //If parameter now is true, function selected using onSynch() function will be always done,
 //else it will be done only if synchronization timer expires
 void DateTime::synchNow(bool now){
-  short hour, minute, second, mil, year, month, day;
-  int64_t synch_time = raw_time + (millis()-synch_millis); //synchronization with millis() function
-  if(!onSynchUTC) synch_time += (long)(HOUR_IN_MILLIS*timezone) + shift*MINUTE; //compensation of non UTC time
-  rawToDateTime(&synch_time,&hour,&minute,&second,&mil,&year,&month,&day); //converting raw value to date and time
   if(_onSynch && (millis() > synch_millis+synch_interval*SECOND || synch_millis == 0 || now)){ //if on synch function is set
     //synchronysation
-    synch_millis = millis(); //set new interval timer value
+    short hour, minute, second, mil, year, month, day;
+    int64_t synch_time = raw_time + (millis()-synch_millis); //synchronization with millis() function
+    if(!onSynchUTC) synch_time += TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) + shift*MINUTE; //compensation of non UTC time
+    rawToDateTime(&synch_time,&hour,&minute,&second,&mil,&year,&month,&day); //converting raw value to date and time
     time_s time_; //create new time structure
     time_.hour = hour;
     time_.minute = minute;
@@ -1668,8 +1676,9 @@ void DateTime::synchNow(bool now){
     time_.year = year;
     time_.month = month;
     time_.day = day;
-    time_.weekday = (((daysFromYearZero(year) + dayInYear(day,month,year)) + WD_CALIB) % 7)+1;
+    time_.weekday = (((daysFromYearZero(year) + dayInYear(day,month,year)-1) + WD_CALIB) % 7)+1;
     _onSynch(&time_); //calling on synch function
+    synch_millis = millis(); //set new interval timer value
     if(!swr){ //if enabled, user have to use "raw()" function to write time in raw form (for NTP servers)
       //convert from time structure into raw value
       hour = time_.hour;
@@ -1681,7 +1690,7 @@ void DateTime::synchNow(bool now){
       day = time_.day;
       dateTimeToRaw(&raw_time,hour,minute,second,mil,year,month,day);
     }
-    if(!onSynchUTC) raw_time = raw_time - (long)(HOUR_IN_MILLIS*timezone) - shift*MINUTE; //write this time in UTC
+    if(!onSynchUTC) raw_time = raw_time - TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) - shift*MINUTE; //write this time in UTC
   }
 }
 
@@ -1691,11 +1700,10 @@ void DateTime::readSynchTime(short *hour, short *minute, short *second, short *m
   //Synchronization
   if(synchEN){
     int64_t synch_time = raw_time + (millis()-synch_millis); //synchronization with millis() function
-    if(!onSynchUTC) synch_time += (long)(HOUR_IN_MILLIS*timezone) + shift*MINUTE; //compensation of non UTC time
+    if(!onSynchUTC) synch_time += TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) + shift*MINUTE; //compensation of non UTC time
     rawToDateTime(&synch_time,hour,minute,second,mil,year,month,day); //converting raw value to date and time
     if(_onSynch && (millis() > synch_millis+synch_interval*SECOND || synch_millis == 0)){ //if on synch function is set
       //need synchronization
-      synch_millis = millis(); //set new interval timer value
       time_s time_; //create new time structure
       time_.hour = *hour;
       time_.minute = *minute;
@@ -1704,8 +1712,9 @@ void DateTime::readSynchTime(short *hour, short *minute, short *second, short *m
       time_.year = *year;
       time_.month = *month;
       time_.day = *day;
-      time_.weekday = (((daysFromYearZero(*year) + dayInYear(*day,*month,*year)) + WD_CALIB) % 7)+1;
+      time_.weekday = (((daysFromYearZero(*year) + dayInYear(*day,*month,*year)-1) + WD_CALIB) % 7)+1;
       _onSynch(&time_); //calling on synch function
+      synch_millis = millis(); //set new interval timer value
       if(!swr){ //if enabled, user have to use "raw()" function to write time in raw form (for NTP servers)
         //convert from time structure into raw value
         *hour = time_.hour;
@@ -1717,7 +1726,7 @@ void DateTime::readSynchTime(short *hour, short *minute, short *second, short *m
         *day = time_.day;
         dateTimeToRaw(&raw_time,*hour,*minute,*second,*mil,*year,*month,*day);
       }
-      if(!onSynchUTC) raw_time = raw_time - (long)(HOUR_IN_MILLIS*timezone) - shift*MINUTE; //write this time in UTC
+      if(!onSynchUTC) raw_time = raw_time - TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) - shift*MINUTE; //write this time in UTC
     }
   }
   
@@ -1725,7 +1734,7 @@ void DateTime::readSynchTime(short *hour, short *minute, short *second, short *m
   if(!synchEN || (UTC && !onSynchUTC) || (!UTC && onSynchUTC)){
     if(UTC) rawToDateTime(&raw_time,hour,minute,second,mil,year,month,day); //data in UTC
     else{
-      int64_t synch_time = raw_time + (long)(HOUR_IN_MILLIS*timezone) + shift*MINUTE;
+      int64_t synch_time = raw_time + TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) + shift*MINUTE;
       rawToDateTime(&synch_time,hour,minute,second,mil,year,month,day);
     }
   }
@@ -1741,19 +1750,22 @@ short DateTime::getWriteOne(short value, byte variable, bool UTC){
   short ret = null_time;
   //Reading
   switch(variable){
-    case GWO_HOUR: hour = constrain(value,0,23); ret = hour; break;
-    case GWO_MINUTE: minute = constrain(value,0,59); ret = minute; break;
-    case GWO_SECOND: second = constrain(value,0,59); ret = second; break;
-    case GWO_MILLIS: mil = constrain(value,0,999); ret = mil; break;
-    case GWO_YEAR: if(year == 0) year = 1; /*year = value;*/ ret = year; break;
-    case GWO_MONTH: month = constrain(value,1,12); ret = month; break;
-    case GWO_DAY: day = constrain(value,1,daysInMonth(month,year)); ret = day; break;
-    //case GWO_WEEKDAY: return (((daysFromYearZero(year) + dayInYear(day,month,year)) + WD_CALIB) % 7)+1;
+    case GWO_HOUR: ret = hour; hour = constrain(value,0,23); break;
+    case GWO_MINUTE: ret = minute; minute = constrain(value,0,59); break;
+    case GWO_SECOND: ret = second; second = constrain(value,0,59); break;
+    case GWO_MILLIS: ret = mil; mil = constrain(value,0,999); break;
+    case GWO_YEAR: ret = year; year = value; if(year == 0) year = 1; break;
+    case GWO_MONTH: ret = month; month = constrain(value,1,12); break;
+    case GWO_DAY: ret = day; day = constrain(value,1,daysInMonth(month,year)); break;
+    //case GWO_WEEKDAY: return (((daysFromYearZero(year) + dayInYear(day,month,year)-1) + WD_CALIB) % 7)+1;
     case GWO_WEEKDAY: if(UTC) return ((daysUTC() + WD_CALIB) % 7)+1;
                       else return ((days() + WD_CALIB) % 7)+1;
   }
   //Writing
-  if(value != null_time) dateTimeToRaw(&raw_time, hour, minute, second, mil, year, month, day);
+  if(value != null_time){
+    dateTimeToRaw(&raw_time, hour, minute, second, mil, year, month, day);
+    synch_millis = millis();
+  }
   return ret;
 }
 
