@@ -1745,8 +1745,8 @@ short DateTime::getWriteOne(short value, byte variable, bool UTC){
     case GWO_MONTH: month = constrain(value,1,12); ret = month; break;
     case GWO_DAY: day = constrain(value,1,daysInMonth(month,year)); ret = day; break;
     //case GWO_WEEKDAY: return (((daysFromYearZero(year) + dayInYear(day,month,year)) + WD_CALIB) % 7)+1;
-    case GWO_WEEKDAY: if(UTC) return (daysUTC() + WD_CALIB) % 7)+1;
-                      else return (days() + WD_CALIB) % 7)+1;
+    case GWO_WEEKDAY: if(UTC) return ((daysUTC() + WD_CALIB) % 7)+1;
+                      else return ((days() + WD_CALIB) % 7)+1;
   }
   //Writing
   if(value != null_time) dateTimeToRaw(&raw_time, hour, minute, second, mil, year, month, day);
