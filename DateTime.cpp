@@ -796,8 +796,8 @@ byte DateTime::weekday(){
 //First day in negative is day -1 and first day in positive is 0 
 long DateTime::daysUTC(){
   synchNow(false);
-  if(raw_time < 0) return((raw_time+1)/MILLIS_IN_DAY)-1;
-  else return raw_time/MILLIS_IN_DAY;
+  if(raw_time < 0) return((raw_time + 1 + (millis()-synch_millis))/MILLIS_IN_DAY)-1;
+  else return (raw_time + (millis()-synch_millis))/MILLIS_IN_DAY;
 }
 
 //Returns count of all days from date 0001.01.01 in UTC
@@ -805,8 +805,8 @@ long DateTime::daysUTC(){
 //First day in negative is day -1 and first day in positive is 0 
 long DateTime::days(){
   synchNow(false);
-  if(raw_time < 0) return((raw_time + 1 + (long)(HOUR_IN_MILLIS*timezone) + shift*MINUTE)/MILLIS_IN_DAY)-1;
-  else return (raw_time + (long)(HOUR_IN_MILLIS*timezone) + shift*MINUTE)/MILLIS_IN_DAY;
+  if(raw_time < 0) return((raw_time + 1 + (long)(HOUR_IN_MILLIS*timezone) + shift*MINUTE + (millis()-synch_millis))/MILLIS_IN_DAY)-1;
+  else return (raw_time + (long)(HOUR_IN_MILLIS*timezone) + shift*MINUTE + (millis()-synch_millis))/MILLIS_IN_DAY;
 }
 
 
@@ -822,45 +822,50 @@ void DateTime::setTimeSpan(int64_t days, long hours, long minutes, long seconds,
 //first millisecond in negative is 0,0,0,0,-1 and first millisecond in positive is 0,0,0,0,0
 void DateTime::getTimeSpan(long &days, long &hours, long &minutes, long &seconds, long &milliseconds){
   synchNow(false);
-  days = raw_time/DAY;
-  hours = (raw_time%DAY)/HOUR;
-  minutes = (raw_time%HOUR)/MINUTE;
-  seconds = (raw_time%MINUTE)/SECOND;
-  milliseconds = raw_time%SECOND;
+  int64_t synch_raw_time = (raw_time + (millis()-synch_millis));
+  days = synch_raw_time/DAY;
+  hours = (synch_raw_time%DAY)/HOUR;
+  minutes = (synch_raw_time%HOUR)/MINUTE;
+  seconds = (synch_raw_time%MINUTE)/SECOND;
+  milliseconds = synch_raw_time%SECOND;
 }
 
 //Use this function, if you want to find out the difference between two DateTimes
 //first second in negative is 0,0,0,-1 and first second in positive is 0,0,0,0
 void DateTime::getTimeSpan(long &days, long &hours, long &minutes, long &seconds){
   synchNow(false);
-  days = raw_time/DAY;
-  hours = (raw_time%DAY)/HOUR;
-  minutes = (raw_time%HOUR)/MINUTE;
-  seconds = (raw_time%MINUTE)/SECOND;
+  int64_t synch_raw_time = (raw_time + (millis()-synch_millis));
+  days = synch_raw_time/DAY;
+  hours = (synch_raw_time%DAY)/HOUR;
+  minutes = (synch_raw_time%HOUR)/MINUTE;
+  seconds = (synch_raw_time%MINUTE)/SECOND;
 }
 
 //Use this function, if you want to find out the difference between two DateTimes
 //first minute in negative is 0,0,-1 and first minute in positive is 0,0,0
 void DateTime::getTimeSpan(long &days, long &hours, long &minutes){
   synchNow(false);
-  days = raw_time/DAY;
-  hours = (raw_time%DAY)/HOUR;
-  minutes = (raw_time%HOUR)/MINUTE;
+  int64_t synch_raw_time = (raw_time + (millis()-synch_millis));
+  days = synch_raw_time/DAY;
+  hours = (synch_raw_time%DAY)/HOUR;
+  minutes = (synch_raw_time%HOUR)/MINUTE;
 }
 
 //Use this function, if you want to find out the difference between two DateTimes
 //first hour in negative is 0,-1 and first hour in positive is 0,0
 void DateTime::getTimeSpan(long &days, long &hours){
   synchNow(false);
-  days = raw_time/DAY;
-  hours = (raw_time%DAY)/HOUR;
+  int64_t synch_raw_time = (raw_time + (millis()-synch_millis));
+  days = synch_raw_time/DAY;
+  hours = (synch_raw_time%DAY)/HOUR;
 }
 
 //Use this function, if you want to find out the difference between two DateTimes
 //first day in negative is -1 and first day in positive is 0
 void DateTime::getTimeSpan(long &days){
   synchNow(false);
-  days = raw_time/DAY;
+  int64_t synch_raw_time = (raw_time + (millis()-synch_millis));
+  days = synch_raw_time/DAY;
 }
 #endif
 
@@ -868,14 +873,25 @@ void DateTime::getTimeSpan(long &days){
 //Sets time using UNIX time format (time in seconds elapsed from 1.1.1970)
 //Parameter ms sets milliseconds (optional)
 void DateTime::setUNIX(uint32_t tim, short ms){
-  raw_time = (int64_t)tim*SECOND + time_base1970 + ms;
+  raw((int64_t)tim*SECOND + time_base1970 + ms, false);
 }
 
 //Returns time in UNIX time format (time in seconds elapsed from 1.1.1970)
 //This value can be easly converted to time_t (e.g. time_t now = dt.getUNIX();)
 uint32_t DateTime::getUNIX(){
-  synchNow(false);
-  return (raw_time - time_base1970)/SECOND;
+  return (raw(false) - time_base1970)/SECOND;
+}
+
+//Sets time using UNIX time format (time in seconds elapsed from 1.1.1970)
+//Parameter ms sets milliseconds (optional)
+void DateTime::setUNIX_UTC(uint32_t tim, short ms){
+  raw((int64_t)tim*SECOND + time_base1970 + ms, true);
+}
+
+//Returns time in UNIX time format (time in seconds elapsed from 1.1.1970)
+//This value can be easly converted to time_t (e.g. time_t now = dt.getUNIX();)
+uint32_t DateTime::getUNIX_UTC(){
+  return (raw(true) - time_base1970)/SECOND;
 }
 
 //Sets new DateTime values in UTC
@@ -1720,7 +1736,9 @@ short DateTime::getWriteOne(short value, byte variable, bool UTC){
     case GWO_YEAR: if(year == 0) year = 1; /*year = value;*/ ret = year; break;
     case GWO_MONTH: month = constrain(value,1,12); ret = month; break;
     case GWO_DAY: day = constrain(value,1,daysInMonth(month,year)); ret = day; break;
-    case GWO_WEEKDAY: return (((daysFromYearZero(year) + dayInYear(day,month,year)) + WD_CALIB) % 7)+1;
+    //case GWO_WEEKDAY: return (((daysFromYearZero(year) + dayInYear(day,month,year)) + WD_CALIB) % 7)+1;
+    case GWO_WEEKDAY: if(UTC) return (daysUTC() + WD_CALIB) % 7)+1;
+                      else return (days() + WD_CALIB) % 7)+1;
   }
   //Writing
   if(value != null_time) dateTimeToRaw(&raw_time, hour, minute, second, mil, year, month, day);
