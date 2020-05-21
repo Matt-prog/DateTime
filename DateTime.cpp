@@ -605,8 +605,8 @@ void DateTime::raw(int64_t _raw, bool UTC){
 //Raw value is count of milliseconds from date 0001.01.01 and time 00:00:00:001
 int64_t DateTime::raw(bool UTC){
   synchNow(false);
-  if(!UTC) return raw_time + (long)(HOUR_IN_MILLIS*timezone) + shift*MINUTE;
-  return raw_time;
+  if(!UTC) return raw_time + (long)(HOUR_IN_MILLIS*timezone) + shift*MINUTE + (millis()-synch_millis);
+  return raw_time + (millis()-synch_millis);
 }
 
 
