@@ -178,6 +178,7 @@ extern void yearFromMillis(int64_t &mil_in, short &year, long &days_in_year);
 extern bool isLeapYear(short year);
 extern byte daysInMonth(byte month, short year = null_time);
 extern uint16_t dayInYear(byte day, byte month, short year = null_time);
+extern byte getWeekday(int64_t &mil_in);
 
 
 #ifdef DateTime_USE_MILLISTIMER
