@@ -1166,6 +1166,7 @@ String DateTime::toLongTimeString(byte _form, const char *separator1, const char
     case S_m: return String(second)+f_s+separator1+String(mil)+f_ms;
     case SS_mmm: return String_(second,2)+f_s+separator1+String_(mil,2)+f_ms;
   }
+  return "";
 }
 
 
@@ -1204,6 +1205,7 @@ String DateTime::toShortTimeString(byte _form, const char *separator1, const cha
     case S_m: return String(second)+separator1+String(mil);
     case SS_mmm: return String_(second,2)+separator1+String_(mil,3);
   }
+  return "";
 }
 
 //Returns date in long form text (for example: 1.January.2019)
@@ -1267,6 +1269,7 @@ String DateTime::toLongDateString(byte _form, const char *separator1, const char
     case YYYY_M:
     case YYYY_MM: return String(year)+BC+separator1+month_;
   }
+  return "";
 }
 
 //Returns date in short form text (for example: 1.1.2019)
@@ -1314,6 +1317,7 @@ String DateTime::toShortDateString(byte _form, const char *separator1, const cha
     case YYYY_M: return String(year)+BC+separator1+String(month);
     case YYYY_MM: return String(year)+BC+separator1+String_(month,2);
   }
+  return "";
 }
 
 //Convert value to string but with set decimal places
@@ -1608,8 +1612,8 @@ int DateTime::getTzDST(long* TZ_offset, long* DST_offset){
   int httpCode = http.GET();
   if (httpCode > 0) {
     const String& json = http.getString();
-    char raw_offset[] = "\"raw_offset\":";
-    char dst_offset[] = "\"dst_offset\":";
+    //char raw_offset[] = "\"raw_offset\":";
+    //char dst_offset[] = "\"dst_offset\":";
     int json_length = json.length();
     int ind = json.indexOf(F("\"raw_offset\":"));
     if(ind >= 0){
