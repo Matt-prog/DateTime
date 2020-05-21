@@ -522,7 +522,7 @@ class DateTime
   long daysUTC();
   long days();
 
-  #ifdef DateTime_SAVE_FLASH || DateTime_USE_TIMESPAN
+  #if defined(DateTime_SAVE_FLASH) || defined(DateTime_USE_TIMESPAN)
   void setTimeSpan(int64_t days, long hours = 0, long minutes = 0, long seconds = 0, long milliseconds = 0);
   void getTimeSpan(long &days, long &hours, long &minutes, long &seconds, long &milliseconds);
   void getTimeSpan(long &days, long &hours, long &minutes, long &seconds);
