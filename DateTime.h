@@ -532,6 +532,8 @@ class DateTime
 
   void setUNIX(uint32_t tim, short ms);
   uint32_t getUNIX();
+  void setUNIX_UTC(uint32_t tim, short ms);
+  uint32_t getUNIX_UTC();
 
   void setUTC(time_s time){setUTC(time.hour,time.second,time.minute,time.milliseconds,time.year,time.month,time.day);}
   void setUTC(short hour, short minute = null_time, short second = null_time, short mil = null_time,short year = null_time, short month = null_time, short day = null_time);
