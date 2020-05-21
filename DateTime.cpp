@@ -124,7 +124,7 @@ byte getWeekday(int64_t mil_in){
   long days_ = 0;
   if(mil_in < 0) days_ = ((mil_in + 1)/MILLIS_IN_DAY)-1;
   else days_ = mil_in/MILLIS_IN_DAY;
-  return (days_ + WD_CALIB) % 7)+1;
+  return ((days_ + WD_CALIB) % 7)+1;
 }
 
 
@@ -818,7 +818,7 @@ long DateTime::days(){
 }
 
 
-#ifdef DateTime_SAVE_FLASH || DateTime_USE_TIMESPAN
+#if defined(DateTime_SAVE_FLASH) || defined(DateTime_USE_TIMESPAN)
 //UTC, DST and SYNCHRONIZATION will NOT work in those TimeSpan functions bellow
 //Use this function, if you want to find out the difference between two DateTimes
 //first millisecond in negative is 0,0,0,0,-1 and first millisecond in positive is 0,0,0,0,0
