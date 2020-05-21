@@ -77,8 +77,8 @@ extern "C"
 #define AM 0
 #define PM 1
   
-#define time_base = 59926608000000LL; //1.1.1900 0:0:0:0 time base for NTP server epoch
-#define time_base1970 = 62135596800000LL; //1.1.1970 0:0:0:0 time base for UNIX time
+#define time_base 59926608000000LL //1.1.1900 0:0:0:0 time base for NTP server epoch
+#define time_base1970 62135596800000LL //1.1.1970 0:0:0:0 time base for UNIX time
 
 #ifndef DateTime_SAVE_FLASH
 //WARNING: DD_MM_YYYY = 01.12.2019 or 15.01.896, but D_M_YY = 1.12.19 or 15.1.96
