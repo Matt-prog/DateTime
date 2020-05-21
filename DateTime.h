@@ -530,9 +530,9 @@ class DateTime
   void getTimeSpan(long &days);
   #endif
 
-  void setUNIX(uint32_t tim, short ms);
+  void setUNIX(uint32_t tim, short ms = 0);
   uint32_t getUNIX();
-  void setUNIX_UTC(uint32_t tim, short ms);
+  void setUNIX_UTC(uint32_t tim, short ms = 0);
   uint32_t getUNIX_UTC();
 
   void setUTC(time_s time){setUTC(time.hour,time.second,time.minute,time.milliseconds,time.year,time.month,time.day);}
