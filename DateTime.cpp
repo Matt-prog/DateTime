@@ -119,6 +119,14 @@ uint16_t dayInYear(byte day, byte month, short year){
   return days+day;
 }
 
+//Return weekday from raw time
+byte getWeekday(int64_t mil_in){
+  long days_ = 0;
+  if(mil_in < 0) days_ = ((mil_in + 1)/MILLIS_IN_DAY)-1;
+  else days_ = mil_in/MILLIS_IN_DAY;
+  return (days_ + WD_CALIB) % 7)+1;
+}
+
 
 
 MillisTimer::MillisTimer(){
