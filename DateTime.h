@@ -536,11 +536,11 @@ class DateTime
   void setUNIX_UTC(uint32_t tim, short ms = 0);
   uint32_t getUNIX_UTC();
 
-  void setUTC(time_s time){setUTC(time.hour,time.second,time.minute,time.milliseconds,time.year,time.month,time.day);}
+  void setUTC(time_s time){setUTC(time.hour,time.minute,time.second,time.milliseconds,time.year,time.month,time.day);}
   void setUTC(short hour, short minute = null_time, short second = null_time, short mil = null_time,short year = null_time, short month = null_time, short day = null_time);
   void setDateUTC(short year, short month = null_time, short day = null_time);
 
-  void set(time_s time){set(time.hour,time.second,time.minute,time.milliseconds,time.year,time.month,time.day);}
+  void set(time_s time){set(time.hour,time.minute,time.second,time.milliseconds,time.year,time.month,time.day);}
   void set(short hour, short minute = null_time, short second = null_time, short mil = null_time,short year = null_time, short month = null_time, short day = null_time);
   void setDate(short year, short month = null_time, short day = null_time);
 
