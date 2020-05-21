@@ -1,1804 +1,768 @@
 
-#include "DateTime.h"
+#ifndef Time_h
+#define Time_h
 
-/*This function convert int64_t (8-bit number) to string, because original function
- *String() can convert maximaly 4-bit number. This function is also usefull in debug process,
- *where you can print raw value of DateTime or TimeSpan.
-*/
-String toStr64(int64_t val){ //convert 64 bit number to string
-  bool neg = val < 0;
-  if(neg) val = -val;
-  String ret = String((byte)(val%10));
-  while((val = val/10) > 0){
-    ret = String((byte)(val%10)) + ret;
-  }
-  if(neg) ret = "-" + ret;
-  return ret;
-}
+#if (ARDUINO >= 100)
+#include "Arduino.h"
+#else
+#include "WProgram.h"
+#endif
 
-/*String toStr64(uint64_t val){ //convert 64 bit number to string
-  String ret = String((byte)(val%10));
-  while((val = val/10) > 0){
-    ret = String((byte)(val%10)) + ret;
-  }
-  return ret;
-}*/
+#ifdef ESP8266 //code only for ESP8266
+#include <ESP8266WiFi.h>
+#include <WiFiUdp.h>
+#include <ESP8266HTTPClient.h>
+//#include <time.h>
+#endif
 
-/* This function returns how many day elapsed from date 0001.01.01.
- * If using years B.C., then it returns negative value.
- * It also counts with leap years as every function in this library.
- */
-int32_t daysFromYearZero(int32_t year){
-  if(year >= 0) year--; //skip year 0 because it does not exist
-  bool neg = (year < 0); //check if year is B.C.
-  int32_t days = 0;
+/*! CPP guard */
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+//#define DateTime_SAVE_FLASH //UNCOMMENT TO SAVE FLASH MEMORY (Warning: some functions might not work)
+//#define DateTime_USE_TIMESPAN //UNCOMMENT IF YOU WANT TO USE getTimeSpan() OR setTimeSpan() IN DateTime CLASS
+
+#define DateTime_USE_ALARM //UNCOMMENT TO USE ALARM CLASS
+#define DateTime_USE_MILLISTIMER //UNCOMMENT TO USE MILLIS TIMER CLASS
   
-  //getting count of leap days
-  if(neg) days = ((year+1)/400)*97 + (((year+1)%400)/100)*24 + ((year+1)%100)/4;
-  else days = (year/400)*97 + ((year%400)/100)*24 + (year%100)/4;
+#define NTP_SERVER_URL_SIZE 60
+
+#define null_time -32768
+
+#ifdef ESP8266 //code only for ESP8266
+#define NTP_PACKET_SIZE 48
+#endif
+
+#define WD_CALIB 1 //Day of week calibration value //TODO calibrate
+
+#define DAYS_IN_400_YRS 146097L
+#define DAYS_IN_100_YRS 36524L //without last leap day
+#define DAYS_IN_4_YRS 1461L //last year is leap year
+#define DAYS_IN_YEAR 365L //without leap day
+
+#define MILLISECOND   1
+#define SECOND        1000
+#define MINUTE        60000L
+#define HOUR          3600000L
+#define DAY           86400000L
+#define TIMEZONE_REPAIR1 100.00
+#define TIMEZONE_REPAIR2 36000L
+#ifndef DateTime_SAVE_FLASH
+#define WEEK          604800000LL
+#define MONTH_31      2678400000LL
+#define MONTH_30      2592000000LL
+#define MONTH_29      2505600000LL
+#define MONTH_28      2419200000LL
+#define MONTH         MONTH_30
+#define YEAR          31536000000LL
+#define LEAP_YEAR     31622400000LL
+#endif
+
+#define MILLIS_IN_DAY   DAY
+#define HOUR_IN_MILLIS  HOUR
+
+//getWriteOne def:
+#define GWO_HOUR 1
+#define GWO_MINUTE 2
+#define GWO_SECOND 3
+#define GWO_MILLIS 4
+#define GWO_YEAR 5
+#define GWO_MONTH 6
+#define GWO_DAY 7
+#define GWO_WEEKDAY 8
+
+#define FORMAT_12HOUR 0
+#define FORMAT_24HOUR 1
+
+#define AM 0
+#define PM 1
   
-  days += year*365; //add normal days
+#define time_base 59926608000000LL //1.1.1900 0:0:0:0 time base for NTP server epoch
+#define time_base1970 62135596800000LL //1.1.1970 0:0:0:0 time base for UNIX time
+
+#ifndef DateTime_SAVE_FLASH
+//WARNING: DD_MM_YYYY = 01.12.2019 or 15.01.896, but D_M_YY = 1.12.19 or 15.1.96
+//every even format have to has short month
+#define DD_MM_YYYY  1
+#define DD_M_YYYY   2
+#define D_MM_YYYY   3
+#define D_M_YYYY    4
+#define MM_YYYY     5
+#define M_YYYY      6
+#define YYYY_MM_DD  7
+#define YYYY_M_DD   8
+#define YYYY_MM_D   9
+#define YYYY_M_D    10
+#define YYYY_MM     11
+#define YYYY_M      12
+#define DD_MM_YY    13
+#define DD_M_YY     14
+#define D_MM_YY     15
+#define D_M_YY      16
+#define MM_YY       17
+#define M_YY        18
+#define YY_MM_DD    19
+#define YY_M_DD     20
+#define YY_MM_D     21
+#define YY_M_D      22
+#define YY_MM       23
+#define YY_M        24
+#define DD_MM       25
+#define DD_M        26
+#define D_MM        27
+#define D_M         28
+#define MM_DD       29
+#define M_DD        30
+#define MM_D        31
+#define M_D         32
+
+#define HH_MM_SS_mmm  100
+#define H_M_S_m       101
+#define HH_MM_SS      102
+#define H_M_S         103
+#define HH_MM         104
+#define H_M           105
+#define M_S           106
+#define MM_SS         107
+#define M_S_m         108
+#define MM_SS_mmm     109
+#define S_m           110
+#define SS_mmm        111
+
+#endif
+
+enum{ //days of weak
+  WD_SUNDAY = 1,
+  WD_MONDAY = 2,
+  WD_TUESDAY = 3,
+  WD_WEDNESDAY = 4,
+  WD_THURSDAY = 5,
+  WD_FRIDAY = 6,
+  WD_SATURDAY = 7
+};
+//#endif
+
+#ifdef ESP8266 //code only for ESP8266
+
+enum{ //NTP errors
+  NTP_NONE = 0,
+  NTP_OK = 1,
+  NTP_NOT_FOUND = 2,
+  NTP_TIMEOUT = 3,
+  NTP_BAD_RESPONSE = 4,
+  NTP_NO_INTERNET = 5
+};
+
+#endif
+
+
+typedef struct{ //time structure to hold time
+  //time_s(int hour,int minute, int second, int milliseconds, int year, int month, int day, int weekday) : hour(hour), minute(minute), second(second), milliseconds(milliseconds), year(year), month(month), day(day), weekday(weekday) {};
+  //time_s() : hour(null_time), minute(null_time), second(null_time), milliseconds(null_time), year(null_time), month(null_time), day(null_time), weekday(null_time) {};
+  short hour = null_time;
+  short minute = null_time;
+  short second = null_time;
+  short milliseconds = null_time;
+  short year = null_time;
+  short month = null_time;
+  short day = null_time;
+  short weekday = null_time;
+}time_s;
+
+
+
+extern String toStr64(int64_t val);
+//extern String toStr64(uint64_t val);
+extern int32_t daysFromYearZero(int32_t year);
+extern void yearFromMillis(int64_t &mil_in, short &year, long &days_in_year);
+extern bool isLeapYear(short year);
+extern byte daysInMonth(byte month, short year = null_time);
+extern uint16_t dayInYear(byte day, byte month, short year = null_time);
+extern byte getWeekday(int64_t &mil_in);
+
+
+#ifdef DateTime_USE_MILLISTIMER
+class MillisTimer
+{
+  public:
+  //constructor:
+  MillisTimer();
+  MillisTimer(unsigned long millis_interval);
+
+  void setInterval(unsigned long millis_interval);
+  unsigned long getInterval();
+
+  unsigned long remainingTime();
   
-  if(neg) days--; //this option is here because year 1 B.C. is also leap day
-  return days;
-}
+  void onHandle(void(*callback)());
+  void handleTime();
 
-/* This function returns year calculated from milliseconds from date 0000.01.01 and time 00:00:00:001
- * It can also returns years B.C. if input parameter mil_in is negative.
- * It also returns how many days elapsed in that year(starts from 1)
- * mil_in is input parameter; year and days_in_year are output parameters
- */
-void yearFromMillis(int64_t &mil_in, short &year, long &days_in_year){
-  char data[4];
-  long excluded_days = 0;
-  days_in_year = 0;
-  bool neg = mil_in < 0;
-  
-  //calculate days from milliseconds
-  if(neg) excluded_days = (mil_in+1)/MILLIS_IN_DAY;
-  else excluded_days = mil_in/MILLIS_IN_DAY;
-  if(neg) excluded_days-=1;
+  void reset();
 
-  /* Leap days are every fourth year, but with one exception.
-   * If year is divisible by 100 and not divisible by 400 it is not leap year.
-   * For example year 1900 was not leap year, but year 2000 was leap year.
-   */
-  data[0] = excluded_days/DAYS_IN_400_YRS; //count of fourth centuries
-  if(neg) data[0]--;
-  excluded_days = abs(excluded_days - data[0]*DAYS_IN_400_YRS); //rest days (this is modulo)
-  data[1] = excluded_days/DAYS_IN_100_YRS; //count of centuries
-  if(data[1] > 3){ //this is last day of 400 years block and it is leap
-    data[1] = 3;
-    if(neg) days_in_year = 1;
-    else days_in_year = 366;
-  }
-  excluded_days = excluded_days - data[1]*DAYS_IN_100_YRS; //rest days after last century (now last leap day is 356th day not 366th) (also act as modulo)
-  data[2] = excluded_days/DAYS_IN_4_YRS; //count of 4 year blocks
-  excluded_days = excluded_days - data[2]*DAYS_IN_4_YRS; //rest days after last 4 years block (also act as modulo)
-  data[3] = excluded_days/DAYS_IN_YEAR; //count of years
-  if(data[3] > 3){ //this is normal leap day(which is every fourth yeary with some exceptions)
-    data[3] = 3;
-    days_in_year = 366;
-  }
-  if(days_in_year == 0)days_in_year = abs(excluded_days - data[3]*DAYS_IN_YEAR)+1; //days in year
+  bool enabled();
+  void enable(bool _en = true);
+  bool repeat();
+  void repeat(bool _rep);
 
-  year = data[3] + data[2]*4 + data[1]*100 + data[0]*400; //put it all together
-  if(!neg) year+=1; //skip year 0
-}
-
-//Returns true if the year is LEAP
-bool isLeapYear(short year){
-  if(year < 0) year++; //skip year 0 because it does not exist
-  if(year%400 == 0) return true;
-  return ((year%4) == 0 && (year%100) != 0);
-}
-
-/*Returns how many days are in specific month
- *Value year is optional and it is used to estable leap year
- */
-byte daysInMonth(byte month, short year){
-  const byte dim[] = {31,28,31,30,31,30,31,31,30,31,30,31};
-  if(month == 2 && year != null_time && isLeapYear(year)) return 29; //this is February in leap year
-  if(month < 1) month = 1;
-  else if(month > 12) month = 12;
-  return dim[month - 1];
-}
-
-/*This function returns how many days elapsed from 1.January
- *Did not starts from zero (the first of January is first day, so this return 1)
- *Value year is optional and it is used to estable leap year
- */
-uint16_t dayInYear(byte day, byte month, short year){
-  if(day < 1) day = 1;
-  byte dim = daysInMonth(month,year);
-  if(day > dim) day = dim;
-  uint16_t days = 0;
-  for(byte i = 1; i < month; i++){
-    days += daysInMonth(i,year);
-  }
-  return days+day;
-}
-
-//Return weekday from raw time
-byte getWeekday(int64_t mil_in){
-  long days_ = 0;
-  if(mil_in < 0) days_ = ((mil_in + 1)/MILLIS_IN_DAY)-1;
-  else days_ = mil_in/MILLIS_IN_DAY;
-  return ((days_ + WD_CALIB) % 7)+1;
-}
-
-
-
-MillisTimer::MillisTimer(){
-  interval = 0;
-}
-
-//Sets interval to timer in milliseconds
-MillisTimer::MillisTimer(unsigned long millis_interval){
-  interval = millis_interval;
-}
-
-//Sets interval to timer in milliseconds
-void MillisTimer::setInterval(unsigned long millis_interval){
-  next_mil -= interval;
-  interval = millis_interval;
-  next_mil += interval;
-}
-
-//Return timer interval
-unsigned long MillisTimer::getInterval(){return interval;}
-
-//Return remaining time
-unsigned long MillisTimer::remainingTime(){
-  unsigned long ret = next_mil - millis();
-  if(ret < 0 || !en) ret = 0;
-  else if(ret > interval) ret = interval;
-  return ret;
-}
-
-//Sets function which will be done after time elapsed
-void MillisTimer::onHandle(void(*callback)()){
-  _onHandle = callback;
-}
-
-//This function have to be included in void loop()
-void MillisTimer::handleTime(){
-  if(millis() >= next_mil && en){
-    if(_onHandle){
-      _onHandle();
-    }
-    if(rep)next_mil += interval;
-    else en = false;
-  }
-}
-
-//Resets timer interval
-void MillisTimer::reset(){
-  next_mil = millis()+interval;
-}
-
-//Return true if timer is enabled
-bool MillisTimer::enabled(){ return en;}
-
-//Enable or disable timer
-void MillisTimer::enable(bool _en){
-  if(!en && _en) reset();
-  en = _en;
-}
-
-//Return if timer will be re-enabled after elapsing timer
-bool MillisTimer::repeat(){return rep;}
-
-//Sets repeating flag
-void MillisTimer::repeat(bool _rep){
-  rep = _rep;
-}
-
-
-
-Alarm::Alarm(){
-  null_alarm = true;
-}
-
-//Sets alarm at specific Date and Time
-Alarm::Alarm(DateTime &dt){
-  null_alarm = false;
-  al_time = dt.get();
-}
-
-//Sets alarm at specific Date and Time
-Alarm::Alarm(short hour, short minute, short second, short mil, short year, short month, short day){
-  null_alarm = false;
-  al_time.hour = hour;
-  al_time.minute = minute;
-  al_time.second = second;
-  al_time.milliseconds = mil;
-  al_time.year = year;
-  al_time.month = month;
-  al_time.day = day;
-}
-
-//Sets alarm at specific Date and Time
-//You do not need to set weekday it will be done automatically
-Alarm::Alarm(time_s &tim){
-  null_alarm = false;
-  al_time = tim;
-}
-
-//Sets alarm at specific Date and Time
-void Alarm::setAlarm(DateTime &dt){
-  null_alarm = false;
-  next_ring_mi = 0;
-  al_time = dt.get();
-}
-
-//Sets alarm at specific Date and Time
-//You do not need to set weekday it will be done automatically
-void Alarm::setAlarm(time_s &tim){
-  null_alarm = false;
-  next_ring_mi = 0;
-  al_time = tim;
-}
-
-//Sets alarm at specific Date and Time
-void Alarm::setAlarm(short hour, short minute, short second, short mil, short year, short month, short day){
-  null_alarm = false;
-  next_ring_mi = 0;
-  al_time.hour = hour;
-  al_time.minute = minute;
-  al_time.second = second;
-  al_time.milliseconds = mil;
-  al_time.year = year;
-  al_time.month = month;
-  al_time.day = day;
-}
-
-//Returns alarm Date and Time
-void Alarm::getAlarm(DateTime &dt){
-  dt.set(al_time);
-}
-
-//Returns alarm Date and Time
-time_s Alarm::getAlarm(){
-  return al_time;
-}
-
-//Returns alarm Date and Time
-void Alarm::getAlarm(short &hour, short &minute, short &second, short &mil, short &year, short &month, short &day){
-  hour = al_time.hour;
-  minute = al_time.minute;
-  second = al_time.second;
-  mil = al_time.milliseconds;
-  year = al_time.year;
-  month = al_time.month;
-  day = al_time.day;
-}
-
-//Returns alarm Date and Time
-void Alarm::getAlarm(short &hour, short &minute, short &second, short &mil){
-  hour = al_time.hour;
-  minute = al_time.minute;
-  second = al_time.second;
-  mil = al_time.milliseconds;
-}
-
-//Returns alarm Date and Time
-void Alarm::getAlarm(short &hour, short &minute, short &second){
-  hour = al_time.hour;
-  minute = al_time.minute;
-  second = al_time.second;
-}
-
-//Returns alarm Date and Time
-void Alarm::getAlarm(short &hour, short &minute){
-  hour = al_time.hour;
-  minute = al_time.minute;
-}
-
-//Resets protection which disable "doubled" alarm ring
-//This protection is automatically reset aproximmatelly 23 hours after the last ring
-//We recommend to use it when synch time is changed by more than one hour
-void Alarm::resetProtection(){
-  next_ring_mi = 0;
-}
-
-//Sets function which will be done when timer rings
-void Alarm::onRinging(void(*callback)(time_s)){
-  _onRinging = callback;
-}
-
-//Sets array of days when the alarm will ring
-//If repeating is dissabled, those days will be ignored
-//Input value _count is size of the array
-//EXAMPLE: byte days[] = {WD_MONDAY, WD_FRIDAY};
-//         onDays(days,2);
-//You can use enums WD_MONDAY,WD_TUESDAY, ...
-void Alarm::onDays(byte *_days, byte _count){
-  days = _days;
-  days_cnt = _count;
-  days_en = true;
-}
-
-//This function sets all days in week when the alarm will ring
-void Alarm::onDays(){
-  days_en = false;
-}
-
-//Return true if Alarm is enabled
-bool Alarm::enabled(){return en;}
-
-//Enable or disable Alarm
-void Alarm::enable(bool _en){
-  en = _en;
-  next_ring_mi = 0;
-}
-
-//Return true if repeating Alarm is enabled
-bool Alarm::repeat(){return rep;}
-
-//Enable or disable repeating
-//WARNIG: If repeating is disabled, Alarm will be disabled after first ring, that mean you have to re-enable it before another use
-void Alarm::repeat(bool _rep){
-  rep = _rep;
-}
-
-//Set time synchronization to Alarm clocks
-//Use this function only when the DateTime instance have enabled synchronization ("DateTime::synchEnable(true)")
-//EXAMPLE: setSynch(&myDateTime);
-void Alarm::setSynch(DateTime *dt){
-  synch_stat = 1;
-  synch_dt = dt;
-}
-
-//Set time synchronization to Alarm clocks
-//Use this function only when the time_s structure is synchronized with clock
-//You do not need to use this function when synchronizing time, only you need to do is only write new value into the time_s structure
-//Example: setSynch(&myTimeStructure);
-void Alarm::setSynch(time_s *tim){
-  synch_stat = 2;
-  synch_tim = tim;
-}
-
-//Sets that synchronization will be done manually in function handleAlarm
-void Alarm::resetSynch(){
-  synch_stat = 0;
-}
-
-//This function have to be included in void loop()!!!
-//Use input values only when clock synchronization is set to manually (using resetSynch())
-bool Alarm::handleAlarm(short hour, short minute, short second, short mil, short year, short month, short day){
-  if(en && !null_alarm){
-    time_s now;
-    //getting the present time
-    if(hour == null_time && (synch_stat == 1 || synch_stat == 2)){
-      if(synch_stat == 1){ //Synchronized DateTime class
-        now = synch_dt->get(); //copy time structure from DateTime
-      }
-      else{
-        now = *synch_tim; // copy time strucutre
-      }
-    }
-    else{
-      //fill time structure by values from the arguments of this function
-      now.hour = hour;
-      now.minute = minute;
-      now.second = second;
-      now.milliseconds = mil;
-      now.year = year;
-      now.month = month;
-      now.day = day;
-    }
-
-    bool ring = false;
-    bool date_available = (now.year != null_time && now.month != null_time && now.day != null_time && now.weekday != null_time && al_time.year != null_time && al_time.month != null_time && al_time.day != null_time);
-    if(date_available){//we can work with date and days
-      //checking if present time is greather than set and if we dont repeat same alarm
-      //protection is disabled here
-      if(!(/*next_ring_mi <= millis() &&*/ now.hour >= al_time.hour && now.minute >= al_time.minute && now.second >= al_time.second && now.milliseconds >= al_time.milliseconds && 
-           now.year >= al_time.year && now.month >= al_time.month && now.day >= al_time.day)) return true;
-      
-      byte next_av_day = 0;
-      if(days_en && days_cnt > 0 && rep){ //there we can work with days in week
-        next_av_day = 7;
-        int8_t diff = 0;
-
-        //calculating weekday from data
-        if(now.weekday == null_time) now.weekday = (((daysFromYearZero(year) + dayInYear(day,month,year)-1) + WD_CALIB) % 7)+1;
-        
-        for(byte i = 0; i < days_cnt; i++){
-          if(days[i] >= 1 && days[i] <= 7){ //validate days
-            ring |= (days[i] == now.weekday); //check if today is allowed day
-            //trying to find next available day
-            diff = days[i] - now.weekday;
-            if(diff <= 0) diff = 7+diff;
-            if(next_av_day > diff) next_av_day = diff;
-          }
-        }
-        if(!ring) return true;
-      }
-      else{
-        ring = true;
-      }
-      
-      if(ring){
-        next_ring_mi = millis()+HOUR_IN_MILLIS*23 - MINUTE; //the alarm can only ring after one day (with some tolerance)
-        if(rep){
-          //add days
-          if(days_en) al_time.day += next_av_day;
-          else al_time.day += 1;
-          if(al_time.day > daysInMonth(al_time.month, al_time.year)){
-            al_time.day -= daysInMonth(al_time.month, al_time.year);
-            al_time.month++;
-          }
-          if(al_time.month > 12){//Happy new year
-             al_time.month = 1;
-             al_time.year++;
-          }
-        }
-      }
-    }
-    else if(now.milliseconds != null_time && al_time.milliseconds != null_time){ //we can work with: hour,minute,second,milliseconds
-      ring = (next_ring_mi <= millis() && now.hour >= al_time.hour && now.minute >= al_time.minute && now.second >= al_time.second && now.milliseconds >= al_time.milliseconds);
-      if(ring) next_ring_mi = millis()+HOUR_IN_MILLIS*23 - MINUTE; //the alarm can only ring after one day (with some tolerance)
-    }
-    else if(now.second != null_time && al_time.second != null_time){ //we can work with: hour,minute,second
-      ring = (next_ring_mi <= millis() && now.hour >= al_time.hour && now.minute >= al_time.minute && now.second >= al_time.second);
-      if(ring) next_ring_mi = millis()+HOUR_IN_MILLIS*23 - MINUTE; //the alarm can only ring after one day (with some tolerance)
-    }
-    else if(now.minute != null_time && al_time.minute != null_time){ //we can work with: hour and minute
-      ring = (next_ring_mi <= millis() && now.hour >= al_time.hour && now.minute >= al_time.minute);
-      if(ring) next_ring_mi = millis()+HOUR_IN_MILLIS*23 - MINUTE; //the alarm can only ring after one day (with some tolerance)
-    }
-    else{
-      return false; //bad set timer or bad handler argumenths
-    }
-    
-    if(ring){ //alarm is ringing finally
-      if(!rep) en = false;
-      if(_onRinging){
-        _onRinging(now);
-      }
-      //else return false;
-    }
-  }
-  return true;
-}
-
+  private:
+  void (*_onHandle)();
+  unsigned long next_mil = 0;
+  bool en;
+  bool rep;
+  unsigned long interval = 0;
+};
+#endif
 
 
 #ifndef DateTime_SAVE_FLASH
-TimeSpan::TimeSpan(){
-  raw_time = 0;
-}
+class TimeSpan
+{
+  public:
+  //constructors:
+  TimeSpan();
+  TimeSpan(int64_t days, long hours = 0, long minutes = 0, long seconds = 0, long milliseconds = 0);
 
-//Set time span value
-TimeSpan::TimeSpan(int64_t days, long hours, long minutes, long seconds, long milliseconds){
-  raw_time = days*DAY + hours*HOUR + minutes*MINUTE + seconds*SECOND + milliseconds;
-}
+  void set(int64_t days = 0, long hours = 0, long minutes = 0, long seconds = 0, long milliseconds = 0);
+  void get(long &days, long &hours, long &minutes, long &seconds, long &milliseconds);
+  void get(long &days, long &hours, long &minutes, long &seconds);
+  void get(long &days, long &hours, long &minutes);
+  void get(long &days, long &hours);
+  void get(long &days);
 
-//Use this function, if you want to find out the difference between two DateTimes
-//first millisecond in negative is 0,0,0,0,-1 and first millisecond in positive is 0,0,0,0,0
-void TimeSpan::set(int64_t days, long hours, long minutes, long seconds, long milliseconds){
-  raw_time = days*DAY + hours*HOUR + minutes*MINUTE + seconds*SECOND + milliseconds;
-}
+  long days(long _days = null_time);
+  long hours(long _hours = null_time);
+  long minutes(long _minutes = null_time);
+  long seconds(long _seconds = null_time);
+  long milliseconds(long _mil = null_time);
 
-//Use this function, if you want to find out the difference between two DateTimes
-//first millisecond in negative is 0,0,0,0,-1 and first millisecond in positive is 0,0,0,0,0
-void TimeSpan::get(long &days, long &hours, long &minutes, long &seconds, long &milliseconds){
-  days = raw_time/DAY;
-  hours = (raw_time%DAY)/HOUR;
-  minutes = (raw_time%HOUR)/MINUTE;
-  seconds = (raw_time%MINUTE)/SECOND;
-  milliseconds = raw_time%SECOND;
-}
+  void raw(int64_t _raw);
+  int64_t raw();
 
-//Use this function, if you want to find out the difference between two DateTimes
-//first second in negative is 0,0,0,-1 and first second in positive is 0,0,0,0
-void TimeSpan::get(long &days, long &hours, long &minutes, long &seconds){
-  days = raw_time/DAY;
-  hours = (raw_time%DAY)/HOUR;
-  minutes = (raw_time%HOUR)/MINUTE;
-  seconds = (raw_time%MINUTE)/SECOND;
-}
-
-//Use this function, if you want to find out the difference between two DateTimes
-//first minute in negative is 0,0,-1 and first minute in positive is 0,0,0
-void TimeSpan::get(long &days, long &hours, long &minutes){
-  days = raw_time/DAY;
-  hours = (raw_time%DAY)/HOUR;
-  minutes = (raw_time%HOUR)/MINUTE;
-}
-
-//Use this function, if you want to find out the difference between two DateTimes
-//first hour in negative is 0,-1 and first hour in positive is 0,0
-void TimeSpan::get(long &days, long &hours){
-  days = raw_time/DAY;
-  hours = (raw_time%DAY)/HOUR;
-}
-
-//Use this function, if you want to find out the difference between two DateTimes
-//first day in negative is -1 and first day in positive is 0
-void TimeSpan::get(long &days){
-  days = raw_time/DAY;
-}
-
-//Returns days and/or write new value
-long TimeSpan::days(long _days){
-  if(_days != null_time){
-    set(_days,(raw_time%DAY)/HOUR,(raw_time%HOUR)/MINUTE,(raw_time%MINUTE)/SECOND,raw_time%SECOND);
+  //operators:
+  operator int64_t /*const*/ (){
+    return raw_time;
   }
-  return raw_time/DAY;
-}
-
-//Returns hours and/or write new value
-long TimeSpan::hours(long _hours){
-  if(_hours != null_time){
-    set(raw_time/DAY,_hours,(raw_time%HOUR)/MINUTE,(raw_time%MINUTE)/SECOND,raw_time%SECOND);
+  
+  TimeSpan& operator()(int64_t days = 0, long hours = 0, long minutes = 0, long seconds = 0, long milliseconds = 0){
+    set(days,hours,minutes,seconds,milliseconds);
+    return *this;
   }
-  return (raw_time%DAY)/HOUR;
-}
 
-//Returns minutes and/or write new value
-long TimeSpan::minutes(long _minutes){
-  if(_minutes != null_time){
-    set(raw_time/DAY,(raw_time%DAY)/HOUR,_minutes,(raw_time%MINUTE)/SECOND,raw_time%SECOND);
+  TimeSpan& operator=(/*const*/ int64_t _raw) {
+    raw_time = _raw;
+    return *this;
   }
-  return (raw_time%HOUR)/MINUTE;
-}
 
-//Returns seconds and/or write new value
-long TimeSpan::seconds(long _seconds){
-  if(_seconds != null_time){
-    set(raw_time/DAY,(raw_time%DAY)/HOUR,(raw_time%HOUR)/MINUTE,_seconds,raw_time%SECOND);
-  }
-  return (raw_time%MINUTE)/SECOND;
-}
+  /*int64_t operator+(const int64_t _raw) {
+    return raw_time + _raw;
+  }*/
 
-//Returns milliseconds and/or write new value
-long TimeSpan::milliseconds(long _mil){
-  if(_mil != null_time){
-    set(raw_time/DAY,(raw_time%DAY)/HOUR,(raw_time%HOUR)/MINUTE,(raw_time%MINUTE)/SECOND,_mil);
+  /*int64_t operator+(DateTime& dt2) {
+    return raw_time + dt2.raw();
+  }*/
+
+  int64_t operator+(TimeSpan& ts2) {
+    return raw_time + ts2.raw();
   }
-  return raw_time%SECOND;
-}
+
+  /*int64_t operator-(int64_t _raw) {
+    return raw_time - _raw;
+  }*/
+
+  /*int64_t operator-(DateTime& dt2) {
+    return raw_time - dt2.raw();
+  }*/
+
+  int64_t operator-(TimeSpan& ts2) {
+    return raw_time - ts2.raw();
+  }
+
+  TimeSpan& operator+=(/*const*/ int64_t _raw) {
+    raw_time += _raw;
+    return *this;
+  }
+
+  /*TimeSpan& operator+=(DateTime& dt2) {
+    raw_time += dt2.raw();
+    return *this;
+  }*/
+
+  TimeSpan& operator+=(TimeSpan& ts2) {
+    raw_time += ts2.raw();
+    return *this;
+  }
+
+  TimeSpan& operator-=(/*const*/ int64_t _raw) {
+    raw_time -= _raw;
+    return *this;
+  }
+
+  /*TimeSpan& operator-=(DateTime& dt2) {
+    raw_time -= dt2.raw();
+    return *this;
+  }*/
+
+  TimeSpan& operator-=(TimeSpan& ts2) {
+    raw_time -= ts2.raw();
+    return *this;
+  }
+
+  bool operator==(/*const*/ TimeSpan &ts2) /*const*/ {
+    return raw_time == ts2.raw();
+  }
+
+  bool operator==(int64_t mil) /*const*/ {
+    return raw_time == mil;
+  }
+
+  bool operator>=(/*const*/ TimeSpan &ts2) /*const*/ {
+    return raw_time >= ts2.raw();
+  }
+
+  bool operator>=(int64_t mil) /*const*/ {
+    return raw_time >= mil;
+  }
+
+  bool operator<=(/*const*/ TimeSpan &ts2) /*const*/ {
+    return raw_time <= ts2.raw();
+  }
+
+  bool operator<=(int64_t mil) /*const*/ {
+    return raw_time <= mil;
+  }
+
+  bool operator<(/*const*/ TimeSpan &ts2) /*const*/ {
+    return raw_time < ts2.raw();
+  }
+
+  bool operator<(int64_t mil) /*const*/ {
+    return raw_time < mil;
+  }
+
+  bool operator>(/*const*/ TimeSpan &ts2) /*const*/ {
+    return raw_time > ts2.raw();
+  }
+
+  bool operator>(int64_t mil) /*const*/ {
+    return raw_time > mil;
+  }
+
+  private:
+  int64_t raw_time = 0;
+};
 
 #endif
 
-//Sets raw value
-void TimeSpan::raw(int64_t _raw){
-  raw_time = _raw;
-}
 
-//Returns raw value
-int64_t TimeSpan::raw(){
-  return raw_time;
-}
+class DateTime
+{
+  public:
+  //constructors:
+  DateTime();
+  DateTime(DateTime &dt);
+  DateTime(int64_t mil);
+  DateTime(byte hour, byte minute, byte second);
+  DateTime(byte hour, byte minute, byte second, uint16_t mil);
+  DateTime(byte hour, byte minute, byte second, uint16_t mil, int16_t year, byte month, byte day);
 
-//Create null DateTime
-DateTime::DateTime(){
-  raw_time = 0; //0001.01.01 00:00:00:000
-  synch_millis = millis();
-}
+  void raw(int64_t _raw, bool UTC = false);
+  int64_t raw(bool UTC = false);
 
-//Create DateTime from another DateTime
-DateTime::DateTime(DateTime &dt){
-  copy(dt);
-}
+  /*operator int64_t const (){
+    if(opUTC) return raw_time;
+    return raw_time + TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) + shift*MINUTE;
+  }*/
 
-DateTime::DateTime(int64_t mil){
-  raw_time = mil;
-  synch_millis = millis();
-}
-
-DateTime::DateTime(byte hour, byte minute, byte second){
-  dateTimeToRaw(&raw_time, hour, minute, second, 0, 1,1,1);
-  synch_millis = millis();
-}
-
-DateTime::DateTime(byte hour, byte minute, byte second, uint16_t mil){
-  dateTimeToRaw(&raw_time, hour, minute, second, mil, 1,1,1);
-  synch_millis = millis();
-}
-
-DateTime::DateTime(byte hour, byte minute, byte second, uint16_t mil, int16_t year, byte month, byte day){
-  dateTimeToRaw(&raw_time, hour, minute, second, mil, year, month, day);
-  synch_millis = millis();
-}
-
-//Sets raw value in milliseconds
-//Input value UTC is optional and it will convert raw value into UTC by set timezone and DST
-void DateTime::raw(int64_t _raw, bool UTC){
-  raw_time = _raw;
-  if(!UTC) raw_time = raw_time - TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) - shift*MINUTE;
-  if(synchEN)synch_millis = millis(); //set new interval timer value, because this is same as synchronization
-}
-
-//Returns raw value in milliseconds
-//Input value UTC is optional, if it true, it will return raw UTC value
-//Raw value is count of milliseconds from date 0001.01.01 and time 00:00:00:001
-int64_t DateTime::raw(bool UTC){
-  synchNow(false);
-  if(!UTC) return raw_time + TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) + shift*MINUTE + (millis()-synch_millis);
-  return raw_time + (millis()-synch_millis);
-}
-
-
-
-//This function copy informations from DateTime dt to this class
-//DateTime dt - class you want to copy from
-//cpy_time - true if you want to copy date and time
-//cpy_TZ - true if you want to copy time zone
-//cpy_DST - true if you want to copy DST settings
-//cpy_format - true if you want to copy hour format
-//cpy_operatorsUseUTC - true if you want to copy operatorsUseUTC() setting
-//cpy_synch - true if you want to copy all synch settings
-//cpy_NTP - true if you want to copy all NTP synch settings
-void DateTime::copy(DateTime &dt, bool cpy_time, bool cpy_TZ, bool cpy_DST, bool cpy_format, bool cpy_operatorsUseUTC, bool cpy_synch, bool cpy_NTP){
-  if(cpy_time) raw(dt.raw(true),true);
-  if(cpy_TZ) setTimezone(dt.getTimezone());
-  if(cpy_DST) DST(true,dt.DST());
-  if(cpy_format) format(dt.format());
-  if(cpy_operatorsUseUTC) operatorsUseUTC(dt.operatorsUseUTC());
-  if(cpy_synch){
-    dt.synchCPY(_onSynch,&onSynchUTC,&swr,&synch_interval,&synch_millis);
-    synchEnable(dt.synchEnabled());
+  operator int64_t (){
+    synchNow();
+    return raw(opUTC);
   }
-  #ifdef ESP8266 //code only for ESP8266
-  if(cpy_NTP){
-    dt.NTPsynchCPY(_onNTPsynch,&ntp_err,&TZDST_err,ntp_server_url,&ntp_en,&ntp_synch_int,&ntp,clck_id,&prepared,&TZDST_mil,&ntp_mil);
+
+  DateTime& operator() (short hour, short minute = null_time, short second = null_time, short mil = null_time,short year = null_time, short month = null_time, short day = null_time){
+    set(hour,minute,second,mil,year,month,day);
+    return *this;
+  }
+
+  DateTime& operator=(int64_t _raw) {
+    raw(_raw,opUTC);
+    if(synchEN)synch_millis = millis(); //set new interval timer value, because this is same as synchronization
+    return *this;
+  }
+
+  /*int64_t operator+(int64_t _raw) {
+    if(opUTC) return raw_time + _raw;
+    return raw_time + _raw + TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) + shift*MINUTE;
+  }*/
+
+  int64_t operator+(DateTime& dt2) {
+    return raw(opUTC) + dt2.raw();
+    /*if(opUTC) return raw_time + dt2.raw();
+    return raw_time + dt2.raw(opUTC) + TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) + shift*MINUTE;*/
+  }
+
+  #ifndef DateTime_SAVE_FLASH
+  int64_t operator+(TimeSpan &ts2) {
+    return raw(opUTC) + ts2.raw();
+    /*if(opUTC) return raw_time + ts2.raw();
+    return raw_time + ts2.raw() + TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) + shift*MINUTE;*/
   }
   #endif
-}
+
+  /*int64_t operator-(int64_t _raw) {
+    if(opUTC) return raw_time - _raw;
+    return raw_time - _raw + TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) + shift*MINUTE;
+  }*/
+
+  int64_t operator-(DateTime& dt2) {
+    return raw(opUTC) + dt2.raw();
+    /*if(opUTC) return raw_time - dt2.raw();
+    return raw_time - dt2.raw(opUTC) + TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) + shift*MINUTE;*/
+  }
+
+  #ifndef DateTime_SAVE_FLASH
+  int64_t operator-(TimeSpan &ts2) {
+    return raw(opUTC) + ts2.raw();
+    /*if(opUTC) return raw_time - ts2.raw();
+    return raw_time - ts2.raw() + TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) + shift*MINUTE;*/
+  }
+  #endif
+
+  DateTime operator+=(int64_t _raw) {
+    raw_time += _raw;
+    return *this;
+  }
+
+  DateTime operator+=(DateTime& dt2) {
+    raw_time += dt2.raw(opUTC);
+    return *this;
+  }
+
+  #ifndef DateTime_SAVE_FLASH
+  DateTime operator+=(TimeSpan &ts2) {
+    raw_time += ts2.raw();
+    return *this;
+  }
+  #endif
+
+  DateTime operator-=(int64_t _raw) {
+    raw_time -= _raw;
+    return *this;
+  }
+
+  DateTime operator-=(DateTime& dt2) {
+    raw_time += dt2.raw(opUTC);
+    return *this;
+  }
+
+  #ifndef DateTime_SAVE_FLASH
+  DateTime operator-=(TimeSpan &ts2) {
+    raw_time += ts2.raw();
+    return *this;
+  }
+  #endif
+
+  bool operator==(DateTime& dt2) {
+    return raw(opUTC) == dt2.raw(opUTC);
+  }
+
+  bool operator==(int64_t mil) {
+    return raw(opUTC) == mil;
+  }
+
+  bool operator>=(DateTime& dt2) {
+    return raw(opUTC) >= dt2.raw(opUTC);
+  }
+
+  bool operator>=(int64_t mil) {
+    return raw(opUTC) >= mil;
+  }
+
+  bool operator<=(DateTime& dt2) {
+    return raw(opUTC) <= dt2.raw(opUTC);
+  }
+
+  bool operator<=(int64_t mil){
+    return raw(opUTC) <= mil;
+  }
+
+  bool operator<(DateTime& dt2) {
+    return raw(opUTC) < dt2.raw(opUTC);
+  }
+
+  bool operator<(int64_t mil) {
+    return raw(opUTC) < mil;
+  }
+
+  bool operator>(DateTime& dt2) {
+    return raw(opUTC) > dt2.raw(opUTC);
+  }
+
+  bool operator>(int64_t mil){
+    return raw(opUTC) > mil;
+  }
+
+  uint16_t millisecondsUTC(uint16_t mil = null_time);
+  byte hourUTC(short hr = null_time, bool pm = true);
+  byte minuteUTC(short mi = null_time);
+  byte secondUTC(short se = null_time);
+  int16_t yearUTC(short ye = null_time);
+  byte monthUTC(short mo = null_time);
+  byte dayUTC(short da = null_time);
+  byte weekdayUTC();
+
+  uint16_t milliseconds(uint16_t mil = null_time);
+  byte hour(short hr = null_time, bool pm = true);
+  byte minute(short mi = null_time);
+  byte second(short se = null_time);
+  int16_t year(short ye = null_time);
+  byte month(short mo = null_time);
+  byte day(short da = null_time);
+  byte weekday();
+
+  long daysUTC();
+  long days();
+
+  #if defined(DateTime_SAVE_FLASH) || defined(DateTime_USE_TIMESPAN)
+  void setTimeSpan(int64_t days, long hours = 0, long minutes = 0, long seconds = 0, long milliseconds = 0);
+  void getTimeSpan(long &days, long &hours, long &minutes, long &seconds, long &milliseconds);
+  void getTimeSpan(long &days, long &hours, long &minutes, long &seconds);
+  void getTimeSpan(long &days, long &hours, long &minutes);
+  void getTimeSpan(long &days, long &hours);
+  void getTimeSpan(long &days);
+  #endif
+
+  void setUNIX(uint32_t tim, short ms = 0);
+  uint32_t getUNIX();
+  void setUNIX_UTC(uint32_t tim, short ms = 0);
+  uint32_t getUNIX_UTC();
+
+  void setUTC(time_s time){setUTC(time.hour,time.minute,time.second,time.milliseconds,time.year,time.month,time.day);}
+  void setUTC(short hour, short minute = null_time, short second = null_time, short mil = null_time,short year = null_time, short month = null_time, short day = null_time);
+  void setDateUTC(short year, short month = null_time, short day = null_time);
+
+  void set(time_s time){set(time.hour,time.minute,time.second,time.milliseconds,time.year,time.month,time.day);}
+  void set(short hour, short minute = null_time, short second = null_time, short mil = null_time,short year = null_time, short month = null_time, short day = null_time);
+  void setDate(short year, short month = null_time, short day = null_time);
+
+  time_s getUTC();
+  void getUTC(short &hour, short &minute, short &second, short &mil,short &year, short &month, short &day);
+  void getUTC(short &hour, short &minute, short &second, short &mil);
+  void getUTC(short &hour, short &minute, short &second);
+  void getDateUTC(short &year, short &month, short &day);
 
 
-void DateTime::synchCPY(void(*callback)(time_s*),bool *onSynchUTC_, bool *swr_, unsigned int *synch_interval_, unsigned long *synch_millis_){
-  callback = _onSynch;
-  *onSynchUTC_ = onSynchUTC;
-  *swr_ = swr;
-  *synch_interval_ = synch_interval;
-  *synch_millis_ = synch_millis;
-}
+  time_s get();
+  void get(short &hour, short &minute, short &second, short &mil,short &year, short &month, short &day);
+  void get(short &hour, short &minute, short &second, short &mil);
+  void get(short &hour, short &minute, short &second);
+  void getDate(short &year, short &month, short &day);
 
-#ifdef ESP8266 //code only for ESP8266
-void DateTime::NTPsynchCPY(void (*callback)(byte), byte *ntp_err_, int *TZDST_err_, char ntp_server_url_[], bool *ntp_en_, unsigned int *ntp_synch_int_, WiFiUDP *ntp_, char clck_id_[5], bool *prepared_, unsigned long *TZDST_mil_, unsigned long *ntp_mil_){
-  callback = _onNTPsynch;
-  *ntp_err_ = ntp_err;
-  *TZDST_err_ = TZDST_err;
-  strcpy(ntp_server_url_,ntp_server_url);
-  *ntp_en_ = ntp_en;
-  *ntp_synch_int_ = ntp_synch_int;
-  *ntp_ = ntp;
-  for(byte i = 0; i < 5; i++) clck_id_[i] = clck_id[i];
-  *prepared_ = prepared;
-  *TZDST_mil_ = TZDST_mil;
-  *ntp_mil_ = ntp_mil;
-}
+  void operatorsUseUTC(bool _en);
+  bool operatorsUseUTC(){return opUTC;};
+
+  void setTimezone(float _timezone);
+  float getTimezone();
+
+  //shift is in minutes
+  void DST(bool _en, int8_t _shift = 60);
+  int8_t DST(){return shift;} //Returns DST shift in minutes
+  bool isDST(){return shift != 0;} //Returns true if DST is enabled
+
+  void format(bool _form); //In this version 12-hour format works only with functions hour and hourUTC and all to String functions
+  bool format(){return time_format;} //Returns hour format
+  bool isPM();
+  bool isAM();
+
+  void copy(DateTime &dt, bool cpy_time = true, bool cpy_TZ = true, bool cpy_DST = true, bool cpy_format = true, bool cpy_operatorsUseUTC = true, bool cpy_synch = true, bool cpy_NTP = true);
+  
+  //DO NOT USE TWO FUNCTIONS BELLOW
+  void synchCPY(void(*callback)(time_s*),bool *onSynchUTC_, bool *swr_, unsigned int *synch_interval_, unsigned long *synch_millis_);
+  #ifdef ESP8266 //code only for ESP8266
+  void NTPsynchCPY(void (*callback)(byte), byte *ntp_err_, int *TZDST_err_, char ntp_server_url_[], bool *ntp_en_, unsigned int *ntp_synch_int_, WiFiUDP *ntp_, char clck_id_[5], bool *prepared_, unsigned long *TZDST_mil_, unsigned long *ntp_mil_);
+  #endif
+  //////////////////////////////////
+
+  #ifndef DateTime_SAVE_FLASH
+  String toLongTimeString(byte _form, const char *separator1, const char *separator2, const char *separator3, bool UTC = false);
+  String toShortTimeString(byte _form, const char *separator1, const char *separator2, const char *separator3, bool UTC = false);
+  String toLongDateString(byte _form, const char *separator1, const char *separator2, bool UTC = false);
+  String toShortDateString(byte _form, const char *separator1, const char *separator2, bool UTC = false);
+  
+  String toLongTimeString(byte _form = H_M_S, const char *separator1 = ":", bool UTC = false){
+     return toLongTimeString(_form, separator1, separator1, separator1, UTC);
+  }
+  String toShortTimeString(byte _form = H_M_S, const char *separator1 = ":", bool UTC = false){
+    return toShortTimeString(_form, separator1, separator1, separator1, UTC);
+  }
+  String toLongDateString(byte _form = YY_M_D, const char *separator1 = ".", bool UTC = false){
+    return toLongDateString(_form, separator1, separator1, UTC);
+  }
+  String toShortDateString(byte _form = YY_M_D, const char *separator1 = ".", bool UTC = false){
+    return toShortDateString(_form, separator1, separator1, UTC);
+  }
+  
+  String toLongTimeString(byte _form, String separator1, String separator2, String separator3, bool UTC = false){
+     return toLongTimeString(_form, separator1.c_str(), separator2.c_str(), separator3.c_str(), UTC);
+  }
+  String toShortTimeString(byte _form, String separator1, String separator2, String separator3, bool UTC = false){
+    return toShortTimeString(_form, separator1.c_str(), separator2.c_str(), separator3.c_str(), UTC);
+  }
+  String toLongDateString(byte _form, String separator1, String separator2, bool UTC = false){
+    return toLongDateString(_form, separator1.c_str(), separator2.c_str(), UTC);
+  }
+  String toShortDateString(byte _form, String separator1, String separator2, bool UTC = false){
+    return toShortDateString(_form, separator1.c_str(), separator2.c_str(), UTC);
+  }
+  
+  String toLongTimeString(byte _form, String separator1, bool UTC = false){
+     return toLongTimeString(_form, separator1.c_str(), separator1.c_str(), separator1.c_str(), UTC);
+  }
+  String toShortTimeString(byte _form, String separator1, bool UTC = false){
+    return toShortTimeString(_form, separator1.c_str(), separator1.c_str(), separator1.c_str(), UTC);
+  }
+  String toLongDateString(byte _form, String separator1, bool UTC = false){
+    return toLongDateString(_form, separator1.c_str(), separator1.c_str(), UTC);
+  }
+  String toShortDateString(byte _form, String separator1, bool UTC = false){
+    return toShortDateString(_form, separator1.c_str(), separator1.c_str(), UTC);
+  }
+  #endif
+
+  void onSynch(void(*callback)(time_s*), bool UTC = false, bool write_raw = false);
+  void synchNow(bool now = true);
+  void synchInterval(unsigned int interval); //interval in seconds
+  bool synchEnable(bool en);
+  bool synchEnabled();
+  unsigned long remainingSynchTime();
+
+  #ifdef ESP8266 //code only for ESP8266
+
+  void setNTPserver(char* addr);
+  char* NTPclockID();
+  byte NTPlastError();
+  void NTPinterval(unsigned int interval);
+  void NTPenable(bool en = true);
+  bool NTPenabled();
+  byte NTPsynchNow();
+  long remainingNTPsynchTime();
+  
+  byte NTPhandler();
+
+  void onNTPsynch(void(*callback)(byte));
+  
+  int updateTZ_DST_lastError();
+  int updateTZ_DST(unsigned long interval = 0);
+  #endif
+  
+  private:
+
+  void (*_onSynch)(time_s*);
+  unsigned long synch_millis = 0;
+  bool onSynchUTC = false;
+  bool swr = false; //synch write raw
+  bool synchEN = false;
+  unsigned int synch_interval = 300; //default is 5 minutes
+  int64_t raw_time = 0; //from year 292277024B.C. to year 292277024
+  float timezone = 0;
+  int16_t shift = 0;
+  bool time_format = FORMAT_24HOUR;
+  bool _PM = false;
+  bool opUTC = false; //Use UTC with operators
+
+  #ifdef ESP8266 //code only for ESP8266
+  const unsigned int localPort = 2390; // local port to listen for UDP packets
+  byte ntp_err = 0; //Last error from NTP synchronization
+  int TZDST_err = 0; //Last error from Time zone and DST update
+  char ntp_server_url[NTP_SERVER_URL_SIZE] = {0}; //NTP server address
+  bool ntp_en = false; //True if ntp synchronization is enabled
+  unsigned int ntp_synch_int = 120; //ntp synchronization interval in seconds
+  WiFiUDP ntp; //NTP server
+  byte packetBuffer[NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing packets
+  char clck_id[5] = {0}; //clock ID
+  bool prepared;
+  unsigned long TZDST_mil = 0; //Time zone and DST next update time
+  unsigned long ntp_mil;
+  void (*_onNTPsynch)(byte);
+
+  void sendNTPpacket(IPAddress& address);
+  int getTzDST(long* TZ_offset, long* DST_offset);
+  HTTPClient http;
+  #endif
+
+  #ifndef DateTime_SAVE_FLASH
+  const __FlashStringHelper *f_min;
+  const __FlashStringHelper *f_s;
+  const __FlashStringHelper *f_ms;
+  #endif
+
+  void readSynchTime(short *hour, short *minute, short *second, short *mil, short *year, short *month, short *day, bool UTC = false);
+  void dateTimeToRaw(int64_t *mil_out, short hour, short minute, short second, short mil, short year, short month, short day);
+  void rawToDateTime(int64_t *mil_in, short *hour, short *minute, short *second, short *mil, short *year, short *month, short *day);
+  short getWriteOne(short value, byte variable, bool UTC = false);
+  #ifndef DateTime_SAVE_FLASH
+  String String_(short value, byte dec_places);
+  #endif
+};
+
+
+#ifdef DateTime_USE_ALARM
+class Alarm
+{
+  public:
+  //constructors:
+  Alarm();
+  Alarm(DateTime &dt);
+  Alarm(time_s &tim);
+  Alarm(short hour, short minute, short second = 0, short mil = 0, short year = null_time, short month = null_time, short day = null_time);
+
+  void setAlarm(DateTime &dt);
+  void setAlarm(time_s &tim);
+  void setAlarm(short hour, short minute, short second = 0, short mil = 0, short year = null_time, short month = null_time, short day = null_time);
+  void getAlarm(DateTime &dt);
+  time_s getAlarm();
+  void getAlarm(short &hour, short &minute, short &second, short &mil, short &year, short &month, short &day);
+  void getAlarm(short &hour, short &minute, short &second, short &mil);
+  void getAlarm(short &hour, short &minute, short &second);
+  void getAlarm(short &hour, short &minute);
+
+  void onDays(/*const*/ byte *_days, byte _count);
+  void onDays();
+  bool enabled();
+  void enable(bool _en = true);
+  bool repeat();
+  void repeat(bool _rep);
+  void setSynch(DateTime *dt);
+  void setSynch(time_s *tim);
+  void resetSynch();
+  void resetProtection();
+
+  void onRinging(void(*callback)(time_s));
+
+  bool handleAlarm(short hour = null_time, short minute = null_time, short second = null_time, short mil = null_time, short year = null_time, short month = null_time, short day = null_time);
+
+  private:
+
+  void (*_onRinging)(time_s);
+  bool null_alarm = false;
+  bool en = false;
+  bool rep = false;
+  byte *days;
+  byte days_cnt = 0;
+  bool days_en = false;
+  byte synch_stat = 0; //0: manual synch, 1: DateTime synch, 2: time structure synch
+  unsigned long next_ring_mi = 0;
+  DateTime *synch_dt;
+  time_s *synch_tim;
+  time_s al_time;
+};
 #endif
 
 
-//Sets and/or return milliseconds in UTC
-uint16_t DateTime::millisecondsUTC(uint16_t mil){
-  return getWriteOne(mil,GWO_MILLIS,true);
-}
-
-//Sets and/or return milliseconds
-uint16_t DateTime::milliseconds(uint16_t mil){
-  return getWriteOne(mil,GWO_MILLIS,false);
-}
-
-//Sets and/or return hour in UTC in set format
-byte DateTime::hourUTC(short hr, bool pm){
-  if(time_format == FORMAT_12HOUR){
-    if(hr != null_time){
-      if(!pm && hr == 12) hr = 0;
-      else if(pm && hr > 12) hr+=12;
-    }
-    byte ret = getWriteOne(hr,GWO_HOUR,true);
-    if(ret < 12){
-      _PM = false;
-      if(ret == 0) ret = 12;
-    }
-    else{
-      _PM = true;
-      if(ret > 12) ret-=12;
-    }
-    return ret;
-  }
-  else{
-    return getWriteOne(hr,GWO_HOUR,true);
-  }
-}
-
-//Sets and/or return hour in set format
-byte DateTime::hour(short hr, bool pm){
-  if(time_format == FORMAT_12HOUR){
-    if(hr != null_time){
-      if(!pm && hr == 12) hr = 0;
-      else if(pm && hr > 12) hr+=12;
-    }
-    byte ret = getWriteOne(hr,GWO_HOUR,false);
-    if(ret < 12){
-      _PM = false;
-      if(ret == 0) ret = 12;
-    }
-    else{
-      _PM = true;
-      if(ret > 12) ret-=12;
-    }
-    return ret;
-  }
-  else{
-    return getWriteOne(hr,GWO_HOUR,false);
-  }
-}
-
-//Sets and/or return minute in UTC
-byte DateTime::minuteUTC(short mi){
-  return getWriteOne(mi,GWO_MINUTE, true);
-}
-
-//Sets and/or return minute
-byte DateTime::minute(short mi){
-  return getWriteOne(mi,GWO_MINUTE, false);
-}
-
-//Sets and/or return second in UTC
-byte DateTime::secondUTC(short se){
-  return getWriteOne(se,GWO_SECOND, true);
-}
-
-//Sets and/or return second
-byte DateTime::second(short se){
-  return getWriteOne(se,GWO_SECOND, false);
-}
-
-//Sets and/or return year in UTC
-int16_t DateTime::yearUTC(short ye){
-  return getWriteOne(ye,GWO_YEAR, true);
-}
-
-//Sets and/or return year
-int16_t DateTime::year(short ye){
-  return getWriteOne(ye,GWO_YEAR, false);
-}
-
-//Sets and/or return month in UTC
-byte DateTime::monthUTC(short mo){
-  return getWriteOne(mo,GWO_MONTH, true);
-}
-
-//Sets and/or return month
-byte DateTime::month(short mo){
-  return getWriteOne(mo,GWO_MONTH, false);
-}
-
-//WARNING: use this function (for writing) after monthUTC, never otherwise,
-//         because for example february has only 28 days and maximum is the 28 not 31,
-//         so it can cause bug
-//Sets and/or return day in UTC
-byte DateTime::dayUTC(short da){
-  return getWriteOne(da,GWO_DAY, true);
-}
-
-//WARNING: use this function (for writing) after month, never otherwise,
-//         because for example february has only 28 days and maximum is the 28 not 31,
-//         so it can cause bug
-//Sets and/or return day
-byte DateTime::day(short da){
-  return getWriteOne(da,GWO_DAY, false);
-}
-
-//Sets and/or return weekday in UTC
-//Sunday is 1, Monday is 2, ...
-//Or use WD_SUNDAY, WA_MONDAY, ...
-byte DateTime::weekdayUTC(){
-  //1 is sunday, 2 monday, ...
-  return getWriteOne(0,GWO_WEEKDAY, true);
-}
-
-//Sets and/or return weekday
-//Sunday is 1, Monday is 2, ...
-//Or use WD_SUNDAY, WA_MONDAY, ...
-byte DateTime::weekday(){
-  //1 is sunday, 2 monday, ...
-  return getWriteOne(0,GWO_WEEKDAY, false);
-}
-
-//Returns count of all days from date 0001.01.01 in UTC
-//This function is reccomended to use when this class is used as timespan
-//First day in negative is day -1 and first day in positive is 0 
-long DateTime::daysUTC(){
-  synchNow(false);
-  if(raw_time < 0) return((raw_time + 1 + (millis()-synch_millis))/MILLIS_IN_DAY)-1;
-  else return (raw_time + (millis()-synch_millis))/MILLIS_IN_DAY;
-}
-
-//Returns count of all days from date 0001.01.01 in UTC
-//This function is reccomended to use when this class is used as timespan
-//First day in negative is day -1 and first day in positive is 0 
-long DateTime::days(){
-  synchNow(false);
-  if(raw_time < 0) return((raw_time + 1 + TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) + shift*MINUTE + (millis()-synch_millis))/MILLIS_IN_DAY)-1;
-  else return (raw_time + TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) + shift*MINUTE + (millis()-synch_millis))/MILLIS_IN_DAY;
-}
-
-
-#if defined(DateTime_SAVE_FLASH) || defined(DateTime_USE_TIMESPAN)
-//UTC, DST and SYNCHRONIZATION will NOT work in those TimeSpan functions bellow
-//Use this function, if you want to find out the difference between two DateTimes
-//first millisecond in negative is 0,0,0,0,-1 and first millisecond in positive is 0,0,0,0,0
-void DateTime::setTimeSpan(int64_t days, long hours, long minutes, long seconds, long milliseconds){
-  raw_time = days*DAY + hours*HOUR + minutes*MINUTE + seconds*SECOND + milliseconds;
-}
-
-//Use this function, if you want to find out the difference between two DateTimes
-//first millisecond in negative is 0,0,0,0,-1 and first millisecond in positive is 0,0,0,0,0
-void DateTime::getTimeSpan(long &days, long &hours, long &minutes, long &seconds, long &milliseconds){
-  synchNow(false);
-  int64_t synch_raw_time = (raw_time + (millis()-synch_millis));
-  days = synch_raw_time/DAY;
-  hours = (synch_raw_time%DAY)/HOUR;
-  minutes = (synch_raw_time%HOUR)/MINUTE;
-  seconds = (synch_raw_time%MINUTE)/SECOND;
-  milliseconds = synch_raw_time%SECOND;
-}
-
-//Use this function, if you want to find out the difference between two DateTimes
-//first second in negative is 0,0,0,-1 and first second in positive is 0,0,0,0
-void DateTime::getTimeSpan(long &days, long &hours, long &minutes, long &seconds){
-  synchNow(false);
-  int64_t synch_raw_time = (raw_time + (millis()-synch_millis));
-  days = synch_raw_time/DAY;
-  hours = (synch_raw_time%DAY)/HOUR;
-  minutes = (synch_raw_time%HOUR)/MINUTE;
-  seconds = (synch_raw_time%MINUTE)/SECOND;
-}
-
-//Use this function, if you want to find out the difference between two DateTimes
-//first minute in negative is 0,0,-1 and first minute in positive is 0,0,0
-void DateTime::getTimeSpan(long &days, long &hours, long &minutes){
-  synchNow(false);
-  int64_t synch_raw_time = (raw_time + (millis()-synch_millis));
-  days = synch_raw_time/DAY;
-  hours = (synch_raw_time%DAY)/HOUR;
-  minutes = (synch_raw_time%HOUR)/MINUTE;
-}
-
-//Use this function, if you want to find out the difference between two DateTimes
-//first hour in negative is 0,-1 and first hour in positive is 0,0
-void DateTime::getTimeSpan(long &days, long &hours){
-  synchNow(false);
-  int64_t synch_raw_time = (raw_time + (millis()-synch_millis));
-  days = synch_raw_time/DAY;
-  hours = (synch_raw_time%DAY)/HOUR;
-}
-
-//Use this function, if you want to find out the difference between two DateTimes
-//first day in negative is -1 and first day in positive is 0
-void DateTime::getTimeSpan(long &days){
-  synchNow(false);
-  int64_t synch_raw_time = (raw_time + (millis()-synch_millis));
-  days = synch_raw_time/DAY;
+/*! CPP guard */
+#ifdef __cplusplus
 }
 #endif
 
-
-//Sets time using UNIX time format (time in seconds elapsed from 1.1.1970)
-//Parameter ms sets milliseconds (optional)
-void DateTime::setUNIX(uint32_t tim, short ms){
-  raw((int64_t)tim*SECOND + time_base1970 + ms, false);
-}
-
-//Returns time in UNIX time format (time in seconds elapsed from 1.1.1970)
-//This value can be easly converted to time_t (e.g. time_t now = dt.getUNIX();)
-uint32_t DateTime::getUNIX(){
-  return (raw(false) - time_base1970)/SECOND;
-}
-
-//Sets time using UNIX time format (time in seconds elapsed from 1.1.1970)
-//Parameter ms sets milliseconds (optional)
-void DateTime::setUNIX_UTC(uint32_t tim, short ms){
-  raw((int64_t)tim*SECOND + time_base1970 + ms, true);
-}
-
-//Returns time in UNIX time format (time in seconds elapsed from 1.1.1970)
-//This value can be easly converted to time_t (e.g. time_t now = dt.getUNIX();)
-uint32_t DateTime::getUNIX_UTC(){
-  return (raw(true) - time_base1970)/SECOND;
-}
-
-//Sets new DateTime values in UTC
-void DateTime::setUTC(short hour, short minute, short second, short mil, short year, short month, short day){
-  if(minute == null_time || second == null_time || mil == null_time || year == null_time || month == null_time || day == null_time){
-    short data[7] = {0};
-    readSynchTime(&data[0],&data[1],&data[2],&data[3],&data[4],&data[5],&data[6], true);
-    if(hour == null_time) hour = data[0];
-    if(minute == null_time) minute = data[1];
-    if(second == null_time) second = data[2];
-    if(mil == null_time) mil = data[3];
-    if(year == null_time) year = data[4];
-    if(month  == null_time) month = data[5];
-    if(day == null_time) day = data[6];
-  }
-  dateTimeToRaw(&raw_time, hour, minute, second, mil, year, month, day);
-  synch_millis = millis();
-}
-
-//Sets new DateTime values
-void DateTime::set(short hour, short minute, short second, short mil, short year, short month, short day){
-  if(minute == null_time || second == null_time || mil == null_time || year == null_time || month == null_time || day == null_time){
-    short data[7] = {0};
-    readSynchTime(&data[0],&data[1],&data[2],&data[3],&data[4],&data[5],&data[6], false);
-    if(hour == null_time) hour = data[0];
-    if(minute == null_time) minute = data[1];
-    if(second == null_time) second = data[2];
-    if(mil == null_time) mil = data[3];
-    if(year == null_time) year = data[4];
-    if(month  == null_time) month = data[5];
-    if(day == null_time) day = data[6];
-  }
-  dateTimeToRaw(&raw_time, hour, minute, second, mil, year, month, day);
-  synch_millis = millis();
-  raw_time = raw_time - TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) - shift*MINUTE; //write UTC
-}
-
-//Sets new Date in UTC
-void DateTime::setDateUTC(short year, short month, short day){
-  short data[7] = {0};
-  readSynchTime(&data[0],&data[1],&data[2],&data[3],&data[4],&data[5],&data[6], true);
-  if(year == null_time) year = data[4];
-  if(month  == null_time) month = data[5];
-  if(day == null_time) day = data[6];
-  synch_millis = millis();
-  dateTimeToRaw(&raw_time, data[0], data[1], data[2], data[3], year, month, day);
-}
-
-//Sets new Date
-void DateTime::setDate(short year, short month, short day){
-  short data[7] = {0};
-  readSynchTime(&data[0],&data[1],&data[2],&data[3],&data[4],&data[5],&data[6], false);
-  if(year == null_time) year = data[4];
-  if(month  == null_time) month = data[5];
-  if(day == null_time) day = data[6];
-  dateTimeToRaw(&raw_time, data[0], data[1], data[2], data[3], year, month, day);
-  synch_millis = millis();
-  raw_time = raw_time - TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) - shift*MINUTE; //write UTC
-}
-
-//Returns time structure (time_s) in UTC
-time_s DateTime::getUTC(){
-  short data[7] = {0};
-  readSynchTime(&data[0],&data[1],&data[2],&data[3],&data[4],&data[5],&data[6], true);
-  int32_t weekday = (((daysFromYearZero(data[4]) + dayInYear(data[6],data[5],data[4])-1) + WD_CALIB) % 7)+1;
-  time_s ret;
-  ret.hour = data[0];
-  ret.minute = data[1];
-  ret.second = data[2];
-  ret.milliseconds = data[3];
-  ret.year = data[4];
-  ret.month = data[5];
-  ret.day = data[6];
-  ret.weekday = weekday;
-  return ret;
-}
-
-//Returns time structure (time_s)
-time_s DateTime::get(){
-  short data[7] = {0};
-  readSynchTime(&data[0],&data[1],&data[2],&data[3],&data[4],&data[5],&data[6], false);
-  int32_t weekday = (((daysFromYearZero(data[4]) + dayInYear(data[6],data[5],data[4])-1) + WD_CALIB) % 7)+1;
-  time_s ret;
-  ret.hour = data[0];
-  ret.minute = data[1];
-  ret.second = data[2];
-  ret.milliseconds = data[3];
-  ret.year = data[4];
-  ret.month = data[5];
-  ret.day = data[6];
-  ret.weekday = weekday;
-  return ret;
-}
-
-//Returns values of DateTime in UTC
-void DateTime::getUTC(short &hour, short &minute, short &second, short &mil,short &year, short &month, short &day){
-  readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, true);
-}
-
-//Returns values of DateTime
-void DateTime::get(short &hour, short &minute, short &second, short &mil,short &year, short &month, short &day){
-  readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, false);
-}
-
-//Returns values of DateTime in UTC
-void DateTime::getUTC(short &hour, short &minute, short &second, short &mil){
-  short year,month,day;
-  readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, true);
-}
-
-//Returns values of DateTime
-void DateTime::get(short &hour, short &minute, short &second, short &mil){
-  short year,month,day;
-  readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, false);
-}
-
-//Returns values of DateTime in UTC
-void DateTime::getUTC(short &hour, short &minute, short &second){
-  short mil,year,month,day;
-  readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, true);
-}
-
-//Returns values of DateTime
-void DateTime::get(short &hour, short &minute, short &second){
-  short mil,year,month,day;
-  readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, false);
-}
-
-//Returns values of DateTime in UTC
-void DateTime::getDateUTC(short &year, short &month, short &day){
-  short hour, minute, second, mil;
-  readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, true);
-}
-
-//Returns values of DateTime
-void DateTime::getDate(short &year, short &month, short &day){
-  short hour, minute, second, mil;
-  readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, false);
-}
-
-//If true, operators will calculate with UTC time
-void DateTime::operatorsUseUTC(bool _en){
-  opUTC = _en;
-}
-
-//Sets function which will be done when synchronization is needed
-//Second parameter sets if new data are in UTC or not
-//When third parameter is true, synchronization inside of synchronization function
-//have to be written in raw form using "raw" function
-void DateTime::onSynch(void(*callback)(time_s*), bool UTC, bool write_raw){
-  _onSynch = callback;
-  onSynchUTC = UTC;
-  swr = write_raw;
-}
-
-//Sets synchronization interval in milliseconds
-//WARNING: If synchronization is enabled, and you call some function to get time, it will
-//         automatically synchronize this time with millis() function, but if the set interval expires,
-//         it will call function which is set in onSynch function
-void DateTime::synchInterval(unsigned int interval){
-  synch_interval = interval;
-}
-
-//Returns remaining time to the next synch in milliseconds
-unsigned long DateTime::remainingSynchTime(){
-  if(!synchEN) return 0;
-  return (synch_millis+synch_interval*SECOND) - millis();
-}
-
-//Enables or disables synchronization
-//If enabled: value will dynamically increase
-//If disabled: value will be still static
-bool DateTime::synchEnable(bool en){
-  bool old = synchEN;
-  synchEN = en;
-  if(old && !synchEN){
-    //Last time synch before disabling synchronization
-    raw_time += (millis()-synch_millis);
-    synch_millis = 0; //reset
-  }
-  //else if(!old && synchEN) synch_millis = millis(); //set new interval timer value
-  return old;
-}
-
-//Returns true if synchronization is enabled
-bool DateTime::synchEnabled(){
-  return synchEN;
-}
-
-//Sets time zone in hours
-//Value 0 is UTC
-//Available time zones: -11,-10,-9,...,-1,0,+1,...,+10,+11,+12
-//You can also use this -3.5 for GMT-3:30
-void DateTime::setTimezone(float _timezone){
-  if(_timezone > 12.00) timezone = 12.00;
-  else if(_timezone < -11.00) timezone = -11.00;
-  else timezone = _timezone;
-}
-
-//Returns set time zone
-float DateTime::getTimezone(){
-  return timezone;
-}
-
-//Enable or disable DST
-//Second parameter sets shift in minutes (default is 60)
-//WARNING: This function cannot determine the time change. You have to do it manually by calling this function.
-void DateTime::DST(bool _en, int8_t _shift){
-  if(!_en) shift = 0;
-  else shift = _shift;
-}
-
-//Sets hour format (FORMAT_12HOUR, FORMAT_24HOUR (default))
-//WARNING: In this version 12-hour format works only with functions hour and hourUTC and all to String functions
-void DateTime::format(bool _form){
-  time_format = _form;
-}
-
-//Return true if time is PM
-//WARNING: Use only after calling any "get time" function, not before, because it will return bad value
-bool DateTime::isPM(){
-  return _PM;
-}
-
-//Return true if time is AM
-//WARNING: Use only after calling any "get time" function, not before, because it will return bad value
-bool DateTime::isAM(){
-  return !_PM;
-}
-
-#ifndef DateTime_SAVE_FLASH //Functions bellow works only if save flash mode is not activated
-//Returns time in long form text (for example: 12h:5min:5s:400ms)
-//First parameter sets text form (for example H_M_S_m)
-//Second sets first separator between values
-//Third sets second separator between values
-//Fourth sets third separator between values
-//Fifth sets if value will be in UTC
-String DateTime::toLongTimeString(byte _form, const char *separator1, const char *separator2, const char *separator3, bool UTC){
-  if(_form < HH_MM_SS_mmm || _form > SS_mmm) _form = H_M_S;
-  short hour, minute, second, mil, year, month, day;
-  readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, UTC);
-  String pm = "";
-  f_ms = F("ms");
-  f_s = F("s");
-  f_min = F("min");
-  if(time_format == FORMAT_12HOUR){
-    if(hour < 12){
-      pm=F("a.m.");
-      if(hour == 0) hour = 12;
-    }
-    else{
-      pm=F("p.m.");
-      if(hour > 12) hour-=12;
-    }
-  }
-  else pm=F("h");
-  switch(_form){
-    case HH_MM_SS_mmm: return String_(hour,2)+pm+separator1+String_(minute,2)+f_min+separator2+String_(second,2)+f_s+separator3+String_(mil,3)+f_ms;
-    case H_M_S_m: return String(hour)+pm+separator1+String(minute)+f_min+separator2+String(second)+f_s+separator3+String(mil)+f_ms;
-    case HH_MM_SS: return String_(hour,2)+pm+separator1+String_(minute,2)+f_min+separator2+String_(second,2)+f_s;
-    case H_M_S: return String(hour)+pm+separator1+String(minute)+f_min+separator2+String(second)+f_s;
-    case HH_MM: return String_(hour,2)+pm+separator1+String_(minute,2)+f_min;
-    case H_M: return String(hour)+pm+separator1+String(minute)+f_min;
-    case M_S: return String(minute)+f_min+separator1+String(second)+f_s;
-    case MM_SS: return String_(minute,2)+f_min+separator1+String_(second,2)+f_s;
-    case M_S_m: return String(minute)+f_min+separator1+String(second)+f_s+separator2+String(mil)+f_ms;
-    case MM_SS_mmm: return String_(minute,2)+f_min+separator1+String_(second,2)+f_s+separator2+String_(mil,2)+f_ms;
-    case S_m: return String(second)+f_s+separator1+String(mil)+f_ms;
-    case SS_mmm: return String_(second,2)+f_s+separator1+String_(mil,2)+f_ms;
-  }
-  return "";
-}
-
-
-//Returns time in short form text (for example: 12:5:5:400)
-//First parameter sets text form (for example H_M_S_m)
-//Second sets first separator between values
-//Third sets second separator between values
-//Fourth sets third separator between values
-//Fifth sets if value will be in UTC
-String DateTime::toShortTimeString(byte _form, const char *separator1, const char *separator2, const char *separator3, bool UTC){
-  if(_form < HH_MM_SS_mmm || _form > SS_mmm) _form = H_M_S;
-  short hour, minute, second, mil, year, month, day;
-  readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, UTC);
-  String pm = "";
-  if(time_format == FORMAT_12HOUR){
-    if(hour < 12){
-      pm=F("a.m.");
-      if(hour == 0) hour = 12;
-    }
-    else{
-      pm=F("p.m.");
-      if(hour > 12) hour-=12;
-    }
-  }
-  switch(_form){
-    case HH_MM_SS_mmm: return String_(hour,2)+pm+separator1+String_(minute,2)+separator2+String_(second,2)+separator3+String_(mil,3);
-    case H_M_S_m: return String(hour)+pm+separator1+String(minute)+separator2+String(second)+separator3+String(mil);
-    case HH_MM_SS: return String_(hour,2)+pm+separator1+String_(minute,2)+separator2+String_(second,2);
-    case H_M_S: return String(hour)+pm+separator1+String(minute)+separator2+String(second);
-    case HH_MM: return String_(hour,2)+pm+separator1+String_(minute,2);
-    case H_M: return String(hour)+pm+separator1+String(minute);
-    case M_S: return String(minute)+separator1+String(second);
-    case MM_SS: return String_(minute,2)+separator1+String_(second,2);
-    case M_S_m: return String(minute)+separator1+String(second)+separator2+String(mil);
-    case MM_SS_mmm: return String_(minute,2)+separator1+String_(second,2)+separator2+String_(mil,3);
-    case S_m: return String(second)+separator1+String(mil);
-    case SS_mmm: return String_(second,2)+separator1+String_(mil,3);
-  }
-  return "";
-}
-
-//Returns date in long form text (for example: 1.January.2019)
-//First parameter sets text form (for example D_MM_YYYY)
-//Second sets first separator between values
-//Third sets second separator between values
-//Fourth sets if value will be in UTC
-String DateTime::toLongDateString(byte _form, const char *separator1, const char *separator2, bool UTC){
-  if(_form < DD_MM_YYYY || _form > M_D) _form = D_MM_YYYY;
-  short hour, minute, second, mil, year, month, day;
-  readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, UTC);
-  String BC = "";
-  String month_ = "";
-  switch(month){
-    case 1: month_ = F("January"); break;
-    case 2: month_ = F("February"); break;
-    case 3: month_ = F("March"); break;
-    case 4: month_ = F("April"); break;
-    case 5: month_ = F("May"); break;
-    case 6: month_ = F("June"); break;
-    case 7: month_ = F("July"); break;
-    case 8: month_ = F("August"); break;
-    case 9: month_ = F("September"); break;
-    case 10: month_ = F("October"); break;
-    case 11: month_ = F("November"); break;
-    case 12: month_ = F("December"); break;
-  }
-  if(_form % 2 == 0) month_ = month_.substring(0,3);
-  if(year < 0) BC = F("B.C");
-  switch(_form){
-    case YYYY_MM_DD:
-    case YYYY_M_DD: return String(year)+BC+separator1+month_+separator2+String_(day,2);
-    case YY_M_D:
-    case YY_MM_D: return String_(year,2)+BC+separator1+month_+separator2+String(day);
-    case YY_M_DD:
-    case YY_MM_DD: return String_(year,2)+BC+separator1+month+separator2+String(day,2);
-    case DD_MM_YYYY:
-    case DD_M_YYYY: return String_(day,2)+separator1+month_+separator2+String(year)+BC;
-    case D_M_YY: 
-    case D_MM_YY: return String(day)+separator1+month_+separator2+String_(year,2)+BC;
-    case DD_M_YY:
-    case DD_MM_YY: return String_(day,2)+separator1+month_+separator2+String_(year,2)+BC;
-    case YYYY_M_D:
-    case YYYY_MM_D: return String(year)+BC+separator1+month_+separator2+String(day);
-    case D_M_YYYY:
-    case D_MM_YYYY: return String(day)+separator1+month_+separator2+String(year)+BC;
-    case D_M:
-    case D_MM: return String(day)+separator1+month_;
-    case DD_M:
-    case DD_MM: return String_(day,2)+separator1+month_;
-    case M_YY:
-    case MM_YY: return month_+separator1+String_(year,2)+BC;
-    case M_YYYY:
-    case MM_YYYY: return month_+separator1+String(year)+BC;
-    case M_D:
-    case MM_D: return month_+separator1+String(day);
-    case M_DD:
-    case MM_DD: return month_+separator1+String_(day,2);
-    case YY_M:
-    case YY_MM: return String_(year,2)+BC+separator1+month_;
-    case YYYY_M:
-    case YYYY_MM: return String(year)+BC+separator1+month_;
-  }
-  return "";
-}
-
-//Returns date in short form text (for example: 1.1.2019)
-//First parameter sets text form (for example D_M_YYYY)
-//Second sets first separator between values
-//Third sets second separator between values
-//Fourth sets if value will be in UTC
-String DateTime::toShortDateString(byte _form, const char *separator1, const char *separator2, bool UTC){
-  if(_form < DD_MM_YYYY || _form > M_D) _form = D_M_YYYY;
-  short hour, minute, second, mil, year, month, day;
-  readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, UTC);
-  String BC = "";
-  if(year < 0) BC = F("B.C");
-  switch(_form){
-    case YYYY_MM_DD: return String(year)+BC+separator1+String_(month,2)+separator2+String_(day,2);
-    case YYYY_M_DD: return String(year)+BC+separator1+String(month)+separator2+String_(day,2);
-    case YY_MM_D: return String_(year,2)+BC+separator1+String_(month,2)+separator2+String(day);
-    case YY_M_D: return String_(year,2)+BC+separator1+String(month)+separator2+String(day);
-    case YY_MM_DD: return String_(year,2)+BC+separator1+String_(month,2)+separator2+String_(day,2);
-    case YY_M_DD: return String_(year,2)+BC+separator1+String(month)+separator2+String_(day,2);
-    case DD_MM_YYYY: return String_(day,2)+separator1+String_(month,2)+separator2+String(year)+BC;
-    case DD_M_YYYY: return String_(day,2)+separator1+String(month)+separator2+String(year)+BC;
-    case D_MM_YY: return String(day)+separator1+String_(month,2)+separator2+String_(year,2)+BC;
-    case D_M_YY: return String(day)+separator1+String(month)+separator2+String_(year,2)+BC;
-    case DD_MM_YY: return String_(day,2)+separator1+String_(month,2)+separator2+String_(year,2)+BC;
-    case DD_M_YY: return String_(day,2)+separator1+String(month)+separator2+String_(year,2)+BC;
-    case YYYY_MM_D: return String(year)+BC+separator1+String_(month,2)+separator2+String(day);
-    case YYYY_M_D: return String(year)+BC+separator1+String(month)+separator2+String(day);
-    case D_MM_YYYY: return String(day)+separator1+String_(month,2)+separator2+String(year)+BC;
-    case D_M_YYYY: return String(day)+separator1+String(month)+separator2+String(year)+BC;
-    case D_MM: return String(day)+separator1+String_(month,2);
-    case D_M: return String(day)+separator1+String(month);
-    case DD_MM: return String_(day,2)+separator1+String_(month,2);
-    case DD_M: return String_(day,2)+separator1+String(month);
-    case MM_YY: return String_(month,2)+separator1+String_(year,2)+BC;
-    case M_YY: return String(month)+separator1+String_(year,2)+BC;
-    case M_YYYY: return String(month)+separator1+String(year)+BC;
-    case MM_YYYY: return String_(month,2)+separator1+String(year)+BC;
-    case MM_D: return String_(month,2)+separator1+String(day);
-    case M_D: return String(month)+separator1+String(day);
-    case MM_DD: return String_(month,2)+separator1+String_(day,2);
-    case M_DD: return String(month)+separator1+String_(day,2);
-    case YY_MM: return String_(year,2)+BC+separator1+String_(month,2);
-    case YY_M: return String_(year,2)+BC+separator1+String(month);
-    case YYYY_M: return String(year)+BC+separator1+String(month);
-    case YYYY_MM: return String(year)+BC+separator1+String_(month,2);
-  }
-  return "";
-}
-
-//Convert value to string but with set decimal places
-String DateTime::String_(short value, byte dec_places){
-  String ret = "";
-  bool neg = value < 0;
-  value = abs(value);
-  for(byte i = 0; i < dec_places; i++){
-    if(i > 0)value = value/10;
-    ret=String(value%10) + ret;
-  }
-  if(neg) return '-' + ret;
-  return ret;
-}
 #endif
-
-#ifdef ESP8266 //code only for ESP8266
-
-//Sets NTP server URL address
-void DateTime::setNTPserver(char* addr){
-  strncpy(ntp_server_url,addr,NTP_SERVER_URL_SIZE);
-  ntp_server_url[NTP_SERVER_URL_SIZE-1] = 0;
-}
-
-//Returns NTP clock ID
-char* DateTime::NTPclockID(){
-  return clck_id;
-}
-
-//Returns last NTP error
-byte DateTime::NTPlastError(){
-  return ntp_err;
-}
-
-//Sets NTP interval in seconds (minimal is 120s)
-void DateTime::NTPinterval(unsigned int interval){
-  if(interval < 120) interval = 120;
-  ntp_synch_int = interval;
-}
-
-//Returns time in ms which remains to next NTP synchronization process
-//Returns negative value when request was sent, but not received yet. (Time to timeout) (timeout is defaultly set to 5s)
-//Else returns positve value
-long DateTime::remainingNTPsynchTime(){
-  if(!ntp_en) return 0;
-  if(prepared) return -(long)((ntp_mil+ntp_synch_int * SECOND) - millis());
-  else return (ntp_mil+ntp_synch_int * SECOND) - millis();
-}
-
-//Enable or disable NTP synchronization
-//If synchronization is disabled, this will automatically enable it
-void DateTime::NTPenable(bool en){
-  if(!synchEN && en)synchEnable(true);
-  //if(!ntp_en && en) ntp.begin(localPort);
-  ntp_en = en;
-}
-
-//Return true if NTP synchronization is enabled
-bool DateTime::NTPenabled(){
-  return ntp_en;
-}
-
-
-void DateTime::onNTPsynch(void(*callback)(byte)){
-  _onNTPsynch = callback;
-}
-
-//Sends UDP synchronization request to NTP server
-byte DateTime::NTPsynchNow(){
-  if(!prepared){
-    ntp.begin(localPort);
-    //get a random server from the pool
-    IPAddress timeServerIP;
-    if(WiFi.hostByName(ntp_server_url, timeServerIP) != 1){
-      ntp_err = NTP_NOT_FOUND;
-      if(_onNTPsynch) _onNTPsynch(ntp_err);
-    }
-    else{
-      sendNTPpacket(timeServerIP); // send an NTP packet to a time server
-      prepared = true;
-      ntp_mil = millis()+5000; //Setting timeout
-    }
-  }
-  if(prepared){
-    int cb = ntp.parsePacket();
-    if(!cb){
-      if(ntp_mil <= millis()){ //NTP Server timeout
-        ntp_err = NTP_TIMEOUT;
-        prepared = false;
-        ntp.stop();
-        ntp_mil = millis() + 5000; //delay 5 seconds before another try
-        if(_onNTPsynch) _onNTPsynch(ntp_err);
-      }
-    }
-    else if(cb < 48){
-      ntp_err = NTP_BAD_RESPONSE;
-      prepared = false;
-      ntp.stop();
-      ntp_mil = millis() + 5000; //delay 5 seconds before another try
-      if(_onNTPsynch) _onNTPsynch(ntp_err);
-    }
-    else{
-      // We've received a packet, read the data from it
-      ntp.read(packetBuffer, NTP_PACKET_SIZE); // read the packet into the buffer
-  
-      //the timestamp starts at byte 40 of the received packet and is four bytes,
-      // or two words, long. First, extract the two words:
-  
-      // combine the four bytes (two words) into a long integer
-      // this is NTP time (milliseconds since Jan 1 1900):
-      int64_t t2 =  ((uint32_t)packetBuffer[40] << 24) | ((uint32_t)packetBuffer[41] << 16) | ((uint32_t)packetBuffer[42] << 8) | packetBuffer[43];
-      int ms = ((unsigned long)(((unsigned int)packetBuffer[44]<<2)|((unsigned int)packetBuffer[45]>>6))*1000)/1024; //milliseconds calculated from fraction
-      t2 = t2*SECOND + ms;
-
-      //time when packet was received by server
-      int64_t t1 = ((uint32_t)packetBuffer[32] << 24) | ((uint32_t)packetBuffer[33] << 16) | ((uint32_t)packetBuffer[34] << 8) | packetBuffer[35];
-      ms = ((unsigned long)(((unsigned int)packetBuffer[36]<<2)|((unsigned int)packetBuffer[37]>>6))*1000)/1024; //milliseconds calculated from fraction
-      t1 = t1*SECOND + ms;
-
-      if(t1 < 60000 && t2 < 60000){ //Low value means, that something is bad, because we have received time at year 1900.
-        ntp_err = NTP_BAD_RESPONSE;
-        prepared = false;
-        ntp_mil = millis() + 5000; //delay 5 seconds before another try
-        if(_onNTPsynch) _onNTPsynch(ntp_err);
-        return ntp_err;
-      }
-
-      t1 = ((millis() - (ntp_mil - 5000)) - (t2 - t1))/2; //t1 is now used as offset
-
-      //writing clock reference ID to array
-      clck_id[0] = (char)packetBuffer[12];
-      clck_id[1] = (char)packetBuffer[13];
-      clck_id[2] = (char)packetBuffer[14];
-      clck_id[3] = (char)packetBuffer[15];
-      clck_id[4] = '\0';
-
-      raw(time_base + t2 + t1,true); //assigning a new value to time in UTC with applied offset
-      prepared = false;
-      ntp_mil = millis() + ntp_synch_int * SECOND;
-      ntp_err = NTP_OK;
-      ntp.stop();
-      if(_onNTPsynch) _onNTPsynch(ntp_err);
-    }
-  }
-  return ntp_err;
-}
-
-//NTP handler have to be included in loop
-//Returns NTP error
-//Warning: FOR BETTER RESULTS DO NOT USE delay() OR delayMicroseconds(), BECAUSE IT CAN CAUSE LONGER RESPONSE
-byte DateTime::NTPhandler(){
-  bool WiFi_conn = (WiFi.status() == WL_CONNECTED);
-  if(synchEN && ntp_en && WiFi_conn){
-    if(!prepared && ntp_mil <= millis()){
-      ntp.begin(localPort);
-      //get a random server from the pool
-      IPAddress timeServerIP;
-      if(WiFi.hostByName(ntp_server_url, timeServerIP) != 1){
-        ntp_err = NTP_NOT_FOUND;
-        if(_onNTPsynch) _onNTPsynch(ntp_err);
-      }
-      else{
-        sendNTPpacket(timeServerIP); // send an NTP packet to a time server
-        prepared = true;
-        ntp_mil = millis()+2500; //Setting timeout
-      }
-    }
-    if (prepared){
-      int cb = ntp.parsePacket();
-      if(!cb){
-        if(ntp_mil <= millis()){ //NTP Server timeout
-          ntp_err = NTP_TIMEOUT;
-          prepared = false;
-          ntp.stop();
-          ntp_mil = millis() + 5000; //delay 5 seconds before another try
-          if(_onNTPsynch) _onNTPsynch(ntp_err);
-        }
-      }
-      else if(cb < 48){
-        ntp_err = NTP_BAD_RESPONSE;
-        prepared = false;
-        ntp.stop();
-        ntp_mil = millis() + 5000; //delay 5 seconds before another try
-        if(_onNTPsynch) _onNTPsynch(ntp_err);
-      }
-      else{
-        // We've received a packet, read the data from it
-        ntp.read(packetBuffer, NTP_PACKET_SIZE); // read the packet into the buffer
-    
-        //the timestamp starts at byte 40 of the received packet and is four bytes,
-        // or two words, long. First, extract the two words:
-    
-        // combine the four bytes (two words) into a long integer
-        // this is NTP time (milliseconds since Jan 1 1900):
-        int64_t t2 =  ((uint32_t)packetBuffer[40] << 24) | ((uint32_t)packetBuffer[41] << 16) | ((uint32_t)packetBuffer[42] << 8) | packetBuffer[43];
-        int ms = ((unsigned long)(((unsigned int)packetBuffer[44]<<2)|((unsigned int)packetBuffer[45]>>6))*1000)/1024; //milliseconds calculated from fraction
-        t2 = t2*SECOND + ms;
-
-        //time when packet was received by server
-        int64_t t1 = ((uint32_t)packetBuffer[32] << 24) | ((uint32_t)packetBuffer[33] << 16) | ((uint32_t)packetBuffer[34] << 8) | packetBuffer[35];
-        ms = ((unsigned long)(((unsigned int)packetBuffer[36]<<2)|((unsigned int)packetBuffer[37]>>6))*1000)/1024; //milliseconds calculated from fraction
-        t1 = t1*SECOND + ms;
-
-        if(t1 < 60000 || t2 < 60000){ //Low value means, that something is bad, because we have received time at year 1900.
-          ntp_err = NTP_BAD_RESPONSE;
-          prepared = false;
-          ntp_mil = millis() + 5000; //delay 5 seconds before another try
-          if(_onNTPsynch) _onNTPsynch(ntp_err);
-          return ntp_err;
-        }
-
-        t1 = ((millis() - (ntp_mil - 5000)) - (t2 - t1))/2; //t1 is now used as offset
-
-        //writing clock reference ID to array
-        clck_id[0] = (char)packetBuffer[12];
-        clck_id[1] = (char)packetBuffer[13];
-        clck_id[2] = (char)packetBuffer[14];
-        clck_id[3] = (char)packetBuffer[15];
-        clck_id[4] = '\0';
-
-        raw(time_base + t2 + t1,true); //assigning a new value to time in UTC with applied offset
-        prepared = false;
-        ntp_mil = millis() + ntp_synch_int * SECOND;
-        ntp_err = NTP_OK;
-        ntp.stop();
-        if(_onNTPsynch) _onNTPsynch(ntp_err);
-      }
-    }
-  }
-  else if(!WiFi_conn){
-    ntp_err = NTP_NO_INTERNET;
-    ntp.stop();
-  }
-  else{
-    ntp_err = NTP_NONE;
-    ntp.stop();
-  }
-  return ntp_err;
-}
-
-// send an NTP request to the time server at the given address
-void DateTime::sendNTPpacket(IPAddress& address){
-  // set all bytes in the buffer to 0
-  memset(packetBuffer, 0, NTP_PACKET_SIZE);
-  // Initialize values needed to form NTP request
-  packetBuffer[0] = 0b11100011; // LI(3), Version(4), Mode(3,client)
-  packetBuffer[1] = 0;     // Stratum, or type of clock
-  packetBuffer[2] = 6;     // Polling Interval (polling interval = 2^6 = 64sec)
-  packetBuffer[3] = 0xEC;  // Peer Clock Precision (precision = 2^(-20) = 0,95367us) (0xEC signed = -20)
-  // 8 bytes of zero for Root Delay & Root Dispersion
-  packetBuffer[12]  = 49;
-  packetBuffer[13]  = 0x4E;
-  packetBuffer[14]  = 49;
-  packetBuffer[15]  = 52;
-
-  // all NTP fields have been given values, now
-  // you can send a packet requesting a timestamp:
-  ntp.beginPacket(address, 123); //NTP requests are to port 123
-  ntp.write(packetBuffer, NTP_PACKET_SIZE);
-  ntp.endPacket();
-}
-
-//Returns last http Code from function updateTZ_DST
-int DateTime::updateTZ_DST_lastError(){
-  return TZDST_err; //returns http Code
-}
-
-//This function update Time zone and DST offset. We recommend to use it inside void loop()
-//Parameter interval is in milliseconds.
-//Returns http Code of response (200 == OK)
-//This function takes 100ms - 200ms
-int DateTime::updateTZ_DST(unsigned long inter_){
-  if(TZDST_mil < millis() || inter_ == 0){
-    if(inter_ != 0) TZDST_mil = millis()+inter_;
-    long TZ = getTimezone()*3600.00;
-    long DST_ = DST()*60;
-    TZDST_err = getTzDST(&TZ, &DST_);
-    if(TZDST_err == 200){ //OK
-      setTimezone(TZ/3600.00);//Set time zone
-      DST(true,DST_/60);   //Enable DST and set DST offset
-    }
-  }
-  return TZDST_err; //returns http Code
-}
-
-//Gets timezone and DST offsets in seconds from server worldtimeapi.org
-//Returns httpCode of received message
-int DateTime::getTzDST(long* TZ_offset, long* DST_offset){
-  //http.setReuse(false);
-  http.begin(F("http://worldtimeapi.org/api/ip"));
-  
-  int httpCode = http.GET();
-  if (httpCode > 0) {
-    const String& json = http.getString();
-    //char raw_offset[] = "\"raw_offset\":";
-    //char dst_offset[] = "\"dst_offset\":";
-    int json_length = json.length();
-    int ind = json.indexOf(F("\"raw_offset\":"));
-    if(ind >= 0){
-      *TZ_offset = 0;
-      ind += 13;  //length of searched string
-      for(; ind < json_length; ind++){
-        if(json.charAt(ind) >= '0' && json.charAt(ind) <= '9'){
-          *TZ_offset *= 10;
-          *TZ_offset += (json.charAt(ind) - '0');
-        }
-        else break;
-      }
-    }
-
-    ind = json.indexOf(F("\"dst_offset\":"));
-    if(ind >= 0){
-      *DST_offset = 0;
-      ind += 13; //length of searched string
-      for(; ind < json_length; ind++){
-        if(json.charAt(ind) >= '0' && json.charAt(ind) <= '9'){
-          *DST_offset *= 10;
-          *DST_offset += (json.charAt(ind) - '0');
-        }
-        else break;
-      }
-    }
-  }
-  http.end();
-  return httpCode;
-}
-
-
-
-#endif
-
-//This function immediately synchronize time using millis() method or calling function selected using onSynch() function
-//If parameter now is true, function selected using onSynch() function will be always done,
-//else it will be done only if synchronization timer expires
-void DateTime::synchNow(bool now){
-  if(_onSynch && (millis() > synch_millis+synch_interval*SECOND || synch_millis == 0 || now)){ //if on synch function is set
-    //synchronysation
-    short hour, minute, second, mil, year, month, day;
-    int64_t synch_time = raw_time + (millis()-synch_millis); //synchronization with millis() function
-    if(!onSynchUTC) synch_time += TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) + shift*MINUTE; //compensation of non UTC time
-    rawToDateTime(&synch_time,&hour,&minute,&second,&mil,&year,&month,&day); //converting raw value to date and time
-    time_s time_; //create new time structure
-    time_.hour = hour;
-    time_.minute = minute;
-    time_.second = second;
-    time_.milliseconds = mil;
-    time_.year = year;
-    time_.month = month;
-    time_.day = day;
-    time_.weekday = (((daysFromYearZero(year) + dayInYear(day,month,year)-1) + WD_CALIB) % 7)+1;
-    _onSynch(&time_); //calling on synch function
-    synch_millis = millis(); //set new interval timer value
-    if(!swr){ //if enabled, user have to use "raw()" function to write time in raw form (for NTP servers)
-      //convert from time structure into raw value
-      hour = time_.hour;
-      minute = time_.minute;
-      second = time_.second;
-      mil = time_.milliseconds;
-      year = time_.year;
-      month = time_.month;
-      day = time_.day;
-      dateTimeToRaw(&raw_time,hour,minute,second,mil,year,month,day);
-    }
-    if(!onSynchUTC) raw_time = raw_time - TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) - shift*MINUTE; //write this time in UTC
-  }
-}
-
-
-//Synchronize time and then return it
-void DateTime::readSynchTime(short *hour, short *minute, short *second, short *mil, short *year, short *month, short *day, bool UTC){
-  //Synchronization
-  if(synchEN){
-    int64_t synch_time = raw_time + (millis()-synch_millis); //synchronization with millis() function
-    if(!onSynchUTC) synch_time += TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) + shift*MINUTE; //compensation of non UTC time
-    rawToDateTime(&synch_time,hour,minute,second,mil,year,month,day); //converting raw value to date and time
-    if(_onSynch && (millis() > synch_millis+synch_interval*SECOND || synch_millis == 0)){ //if on synch function is set
-      //need synchronization
-      time_s time_; //create new time structure
-      time_.hour = *hour;
-      time_.minute = *minute;
-      time_.second = *second;
-      time_.milliseconds = *mil;
-      time_.year = *year;
-      time_.month = *month;
-      time_.day = *day;
-      time_.weekday = (((daysFromYearZero(*year) + dayInYear(*day,*month,*year)-1) + WD_CALIB) % 7)+1;
-      _onSynch(&time_); //calling on synch function
-      synch_millis = millis(); //set new interval timer value
-      if(!swr){ //if enabled, user have to use "raw()" function to write time in raw form (for NTP servers)
-        //convert from time structure into raw value
-        *hour = time_.hour;
-        *minute = time_.minute;
-        *second = time_.second;
-        *mil = time_.milliseconds;
-        *year = time_.year;
-        *month = time_.month;
-        *day = time_.day;
-        dateTimeToRaw(&raw_time,*hour,*minute,*second,*mil,*year,*month,*day);
-      }
-      if(!onSynchUTC) raw_time = raw_time - TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) - shift*MINUTE; //write this time in UTC
-    }
-  }
-  
-  //Read data from raw value only if needed and compensate non UTC or UTC time
-  if(!synchEN || (UTC && !onSynchUTC) || (!UTC && onSynchUTC)){
-    if(UTC) rawToDateTime(&raw_time,hour,minute,second,mil,year,month,day); //data in UTC
-    else{
-      int64_t synch_time = raw_time + TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) + shift*MINUTE;
-      rawToDateTime(&synch_time,hour,minute,second,mil,year,month,day);
-    }
-  }
-}
-
-//Returns or write selected value from DateTime
-//First parameter is value to write (use null_time to read only)
-//Second parameter is pointing to which value will be read
-//Third parameter sets if value will be in UTC time
-short DateTime::getWriteOne(short value, byte variable, bool UTC){
-  short hour,minute,second,mil,year,month,day;
-  readSynchTime(&hour,&minute,&second,&mil,&year,&month,&day, UTC);
-  short ret = null_time;
-  //Reading
-  switch(variable){
-    case GWO_HOUR: ret = hour; hour = constrain(value,0,23); break;
-    case GWO_MINUTE: ret = minute; minute = constrain(value,0,59); break;
-    case GWO_SECOND: ret = second; second = constrain(value,0,59); break;
-    case GWO_MILLIS: ret = mil; mil = constrain(value,0,999); break;
-    case GWO_YEAR: ret = year; year = value; if(year == 0) year = 1; break;
-    case GWO_MONTH: ret = month; month = constrain(value,1,12); break;
-    case GWO_DAY: ret = day; day = constrain(value,1,daysInMonth(month,year)); break;
-    //case GWO_WEEKDAY: return (((daysFromYearZero(year) + dayInYear(day,month,year)-1) + WD_CALIB) % 7)+1;
-    case GWO_WEEKDAY: if(UTC) return ((daysUTC() + WD_CALIB) % 7)+1;
-                      else return ((days() + WD_CALIB) % 7)+1;
-  }
-  //Writing
-  if(value != null_time){
-    dateTimeToRaw(&raw_time, hour, minute, second, mil, year, month, day);
-    synch_millis = millis();
-  }
-  return ret;
-}
-
-//Converts DateTime values to raw value
-void DateTime::dateTimeToRaw(int64_t *mil_out, short hour, short minute, short second, short mil, short year, short month, short day){
-  *mil_out = 0;
-  if(mil >= 0 && mil < SECOND) *mil_out = mil;
-  if(second >= 0 && second < 60) *mil_out += (uint16_t)second*SECOND;
-  if(minute >= 0 && minute < 60) *mil_out += (uint32_t)minute*MINUTE;
-  if(hour >= 0 && hour < 24) *mil_out += (int64_t)hour*HOUR;
-  if(day > 0 && month > 0)*mil_out += (int64_t)(dayInYear(day,month,year)-1)*MILLIS_IN_DAY;
-  if(year != null_time) *mil_out += (int64_t)daysFromYearZero(year)*MILLIS_IN_DAY;
-}
-
-//Converts raw value to DateTime values
-void DateTime::rawToDateTime(int64_t *mil_in, short *hour, short *minute, short *second, short *mil, short *year, short *month, short *day){
-  if(*year != null_time){
-    long days = 0;
-    yearFromMillis(*mil_in,*year,days);
-    byte i = 1;
-    byte dim; //days in month
-    while((dim = daysInMonth(i,*year)) < days && i <= 12){
-      days -= dim;
-      i++;
-    }
-    if(*month != null_time) *month = i;
-    if(*day != null_time) *day = days;
-  }
-
-  unsigned long mil_in_day = *mil_in%DAY;
-  if(*mil_in < 0) mil_in_day = DAY-abs(mil_in_day);
-  if(*mil != null_time) *mil = mil_in_day%SECOND; //milliseconds
-  if(*second != null_time) *second = (mil_in_day%MINUTE)/SECOND;
-  if(*minute != null_time) *minute = (mil_in_day%HOUR)/MINUTE;
-  if(*hour != null_time) *hour = mil_in_day/HOUR;
-}
