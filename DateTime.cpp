@@ -1445,8 +1445,15 @@ byte DateTime::NTPsynchNow(){
       int64_t t1 = ((uint32_t)packetBuffer[32] << 24) | ((uint32_t)packetBuffer[33] << 16) | ((uint32_t)packetBuffer[34] << 8) | packetBuffer[35];
       ms = ((unsigned long)(((unsigned int)packetBuffer[36]<<2)|((unsigned int)packetBuffer[37]>>6))*1000)/1024; //milliseconds calculated from fraction
       t1 = t1*SECOND + ms;
+      
+      //writing clock reference ID to array (on NTP_BAD_RESPONSE this is "kiss code")
+      clck_id[0] = (char)packetBuffer[12];
+      clck_id[1] = (char)packetBuffer[13];
+      clck_id[2] = (char)packetBuffer[14];
+      clck_id[3] = (char)packetBuffer[15];
+      clck_id[4] = '\0';
 
-      if(t1 < 60000 && t2 < 60000){ //Low value means, that something is bad, because we have received time at year 1900.
+      if(t1 < 60000 || t2 < 60000 || packetBuffer[1] < 1 || packetBuffer[1] > 15){ //Low value means, that something is bad, because we have received time at year 1900, also check stratum
         ntp_err = NTP_BAD_RESPONSE;
         prepared = false;
         ntp_mil = millis() + 5000; //delay 5 seconds before another try
@@ -1455,13 +1462,6 @@ byte DateTime::NTPsynchNow(){
       }
 
       t1 = ((millis() - (ntp_mil - 5000)) - (t2 - t1))/2; //t1 is now used as offset
-
-      //writing clock reference ID to array
-      clck_id[0] = (char)packetBuffer[12];
-      clck_id[1] = (char)packetBuffer[13];
-      clck_id[2] = (char)packetBuffer[14];
-      clck_id[3] = (char)packetBuffer[15];
-      clck_id[4] = '\0';
 
       raw(time_base + t2 + t1,true); //assigning a new value to time in UTC with applied offset
       prepared = false;
@@ -1529,8 +1529,15 @@ byte DateTime::NTPhandler(){
         int64_t t1 = ((uint32_t)packetBuffer[32] << 24) | ((uint32_t)packetBuffer[33] << 16) | ((uint32_t)packetBuffer[34] << 8) | packetBuffer[35];
         ms = ((unsigned long)(((unsigned int)packetBuffer[36]<<2)|((unsigned int)packetBuffer[37]>>6))*1000)/1024; //milliseconds calculated from fraction
         t1 = t1*SECOND + ms;
+        
+        //writing clock reference ID to array (on NTP_BAD_RESPONSE this is "kiss code")
+        clck_id[0] = (char)packetBuffer[12];
+        clck_id[1] = (char)packetBuffer[13];
+        clck_id[2] = (char)packetBuffer[14];
+        clck_id[3] = (char)packetBuffer[15];
+        clck_id[4] = '\0';
 
-        if(t1 < 60000 || t2 < 60000){ //Low value means, that something is bad, because we have received time at year 1900.
+        if(t1 < 60000 || t2 < 60000 || packetBuffer[1] < 1 || packetBuffer[1] > 15){ //Low value means, that something is bad, because we have received time at year 1900, also check stratum
           ntp_err = NTP_BAD_RESPONSE;
           prepared = false;
           ntp_mil = millis() + 5000; //delay 5 seconds before another try
@@ -1539,13 +1546,6 @@ byte DateTime::NTPhandler(){
         }
 
         t1 = ((millis() - (ntp_mil - 5000)) - (t2 - t1))/2; //t1 is now used as offset
-
-        //writing clock reference ID to array
-        clck_id[0] = (char)packetBuffer[12];
-        clck_id[1] = (char)packetBuffer[13];
-        clck_id[2] = (char)packetBuffer[14];
-        clck_id[3] = (char)packetBuffer[15];
-        clck_id[4] = '\0';
 
         raw(time_base + t2 + t1,true); //assigning a new value to time in UTC with applied offset
         prepared = false;
