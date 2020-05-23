@@ -35,25 +35,27 @@ extern "C"
 #define NTP_PACKET_SIZE 48
 #endif
 
-#define WD_CALIB 0 //Day of week calibration value //TODO calibrate
+#define WD_CALIB 1 //Day of week calibration value //TODO calibrate
 
 #define DAYS_IN_400_YRS 146097L
 #define DAYS_IN_100_YRS 36524L //without last leap day
 #define DAYS_IN_4_YRS 1461L //last year is leap year
 #define DAYS_IN_YEAR 365L //without leap day
 
-#define MILLISECOND  1
+#define MILLISECOND   1
 #define SECOND        1000
 #define MINUTE        60000L
 #define HOUR          3600000L
 #define DAY           86400000L
+#define TIMEZONE_REPAIR1 100.00
+#define TIMEZONE_REPAIR2 36000L
 #ifndef DateTime_SAVE_FLASH
 #define WEEK          604800000LL
 #define MONTH_31      2678400000LL
 #define MONTH_30      2592000000LL
 #define MONTH_29      2505600000LL
 #define MONTH_28      2419200000LL
-#define MONTH         MONTH_30;
+#define MONTH         MONTH_30
 #define YEAR          31536000000LL
 #define LEAP_YEAR     31622400000LL
 #endif
@@ -370,7 +372,7 @@ class DateTime
 
   /*operator int64_t const (){
     if(opUTC) return raw_time;
-    return raw_time + (long)(HOUR_IN_MILLIS*timezone) + shift*MINUTE;
+    return raw_time + TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) + shift*MINUTE;
   }*/
 
   operator int64_t (){
@@ -391,39 +393,39 @@ class DateTime
 
   /*int64_t operator+(int64_t _raw) {
     if(opUTC) return raw_time + _raw;
-    return raw_time + _raw + (long)(HOUR_IN_MILLIS*timezone) + shift*MINUTE;
+    return raw_time + _raw + TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) + shift*MINUTE;
   }*/
 
   int64_t operator+(DateTime& dt2) {
     return raw(opUTC) + dt2.raw();
     /*if(opUTC) return raw_time + dt2.raw();
-    return raw_time + dt2.raw(opUTC) + (long)(HOUR_IN_MILLIS*timezone) + shift*MINUTE;*/
+    return raw_time + dt2.raw(opUTC) + TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) + shift*MINUTE;*/
   }
 
   #ifndef DateTime_SAVE_FLASH
   int64_t operator+(TimeSpan &ts2) {
     return raw(opUTC) + ts2.raw();
     /*if(opUTC) return raw_time + ts2.raw();
-    return raw_time + ts2.raw() + (long)(HOUR_IN_MILLIS*timezone) + shift*MINUTE;*/
+    return raw_time + ts2.raw() + TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) + shift*MINUTE;*/
   }
   #endif
 
   /*int64_t operator-(int64_t _raw) {
     if(opUTC) return raw_time - _raw;
-    return raw_time - _raw + (long)(HOUR_IN_MILLIS*timezone) + shift*MINUTE;
+    return raw_time - _raw + TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) + shift*MINUTE;
   }*/
 
   int64_t operator-(DateTime& dt2) {
     return raw(opUTC) + dt2.raw();
     /*if(opUTC) return raw_time - dt2.raw();
-    return raw_time - dt2.raw(opUTC) + (long)(HOUR_IN_MILLIS*timezone) + shift*MINUTE;*/
+    return raw_time - dt2.raw(opUTC) + TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) + shift*MINUTE;*/
   }
 
   #ifndef DateTime_SAVE_FLASH
   int64_t operator-(TimeSpan &ts2) {
     return raw(opUTC) + ts2.raw();
     /*if(opUTC) return raw_time - ts2.raw();
-    return raw_time - ts2.raw() + (long)(HOUR_IN_MILLIS*timezone) + shift*MINUTE;*/
+    return raw_time - ts2.raw() + TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) + shift*MINUTE;*/
   }
   #endif
 
