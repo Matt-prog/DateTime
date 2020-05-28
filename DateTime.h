@@ -679,7 +679,7 @@ class DateTime
   bool ntp_en = false; //True if ntp synchronization is enabled
   unsigned int ntp_synch_int = 120; //ntp synchronization interval in seconds
   WiFiUDP ntp; //NTP server
-  byte packetBuffer[NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing packets
+  //byte packetBuffer[NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing packets
   char clck_id[5] = {0}; //clock ID
   bool prepared;
   unsigned long TZDST_mil = 0; //Time zone and DST next update time
