@@ -1430,6 +1430,7 @@ byte DateTime::NTPsynchNow(){
     }
     else{
       // We've received a packet, read the data from it
+      byte packetBuffer[NTP_PACKET_SIZE] = {0}; //buffer to hold incoming and outgoing packets
       ntp.read(packetBuffer, NTP_PACKET_SIZE); // read the packet into the buffer
   
       //the timestamp starts at byte 40 of the received packet and is four bytes,
@@ -1514,6 +1515,7 @@ byte DateTime::NTPhandler(){
       }
       else{
         // We've received a packet, read the data from it
+        byte packetBuffer[NTP_PACKET_SIZE] = {0}; //buffer to hold incoming and outgoing packets
         ntp.read(packetBuffer, NTP_PACKET_SIZE); // read the packet into the buffer
     
         //the timestamp starts at byte 40 of the received packet and is four bytes,
@@ -1569,8 +1571,7 @@ byte DateTime::NTPhandler(){
 
 // send an NTP request to the time server at the given address
 void DateTime::sendNTPpacket(IPAddress& address){
-  // set all bytes in the buffer to 0
-  memset(packetBuffer, 0, NTP_PACKET_SIZE);
+  byte packetBuffer[NTP_PACKET_SIZE] = {0}; //buffer to hold incoming and outgoing packets
   // Initialize values needed to form NTP request
   packetBuffer[0] = 0b11100011; // LI(3), Version(4), Mode(3,client)
   packetBuffer[1] = 0;     // Stratum, or type of clock
