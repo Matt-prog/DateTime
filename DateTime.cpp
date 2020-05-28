@@ -1011,37 +1011,37 @@ void DateTime::get(short &hour, short &minute, short &second, short &mil,short &
 
 //Returns values of DateTime in UTC
 void DateTime::getUTC(short &hour, short &minute, short &second, short &mil){
-  short year,month,day;
+  short year = 0,month = 0,day = 0;
   readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, true);
 }
 
 //Returns values of DateTime
 void DateTime::get(short &hour, short &minute, short &second, short &mil){
-  short year,month,day;
+  short year = 0,month = 0,day = 0;
   readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, false);
 }
 
 //Returns values of DateTime in UTC
 void DateTime::getUTC(short &hour, short &minute, short &second){
-  short mil,year,month,day;
+  short mil = 0,year = 0,month = 0,day = 0;
   readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, true);
 }
 
 //Returns values of DateTime
 void DateTime::get(short &hour, short &minute, short &second){
-  short mil,year,month,day;
+  short mil = 0,year = 0,month = 0,day = 0;
   readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, false);
 }
 
 //Returns values of DateTime in UTC
 void DateTime::getDateUTC(short &year, short &month, short &day){
-  short hour, minute, second, mil;
+  short hour = 0, minute = 0, second = 0, mil = 0;
   readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, true);
 }
 
 //Returns values of DateTime
 void DateTime::getDate(short &year, short &month, short &day){
-  short hour, minute, second, mil;
+  short hour = 0, minute = 0, second = 0, mil = 0;
   readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, false);
 }
 
@@ -1144,7 +1144,7 @@ bool DateTime::isAM(){
 //Fifth sets if value will be in UTC
 String DateTime::toLongTimeString(byte _form, const char *separator1, const char *separator2, const char *separator3, bool UTC){
   if(_form < HH_MM_SS_mmm || _form > SS_mmm) _form = H_M_S;
-  short hour, minute, second, mil, year, month, day;
+  short hour = 0, minute = 0, second = 0, mil = 0, year = 0, month = 0, day = 0;
   readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, UTC);
   String pm = "";
   f_ms = F("ms");
@@ -1187,7 +1187,7 @@ String DateTime::toLongTimeString(byte _form, const char *separator1, const char
 //Fifth sets if value will be in UTC
 String DateTime::toShortTimeString(byte _form, const char *separator1, const char *separator2, const char *separator3, bool UTC){
   if(_form < HH_MM_SS_mmm || _form > SS_mmm) _form = H_M_S;
-  short hour, minute, second, mil, year, month, day;
+  short hour = 0, minute = 0, second = 0, mil = 0, year = 0, month = 0, day = 0;
   readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, UTC);
   String pm = "";
   if(time_format == FORMAT_12HOUR){
@@ -1224,7 +1224,7 @@ String DateTime::toShortTimeString(byte _form, const char *separator1, const cha
 //Fourth sets if value will be in UTC
 String DateTime::toLongDateString(byte _form, const char *separator1, const char *separator2, bool UTC){
   if(_form < DD_MM_YYYY || _form > M_D) _form = D_MM_YYYY;
-  short hour, minute, second, mil, year, month, day;
+  short hour = 0, minute = 0, second = 0, mil = 0, year = 0, month = 0, day = 0;
   readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, UTC);
   String BC = "";
   String month_ = "";
@@ -1288,7 +1288,7 @@ String DateTime::toLongDateString(byte _form, const char *separator1, const char
 //Fourth sets if value will be in UTC
 String DateTime::toShortDateString(byte _form, const char *separator1, const char *separator2, bool UTC){
   if(_form < DD_MM_YYYY || _form > M_D) _form = D_M_YYYY;
-  short hour, minute, second, mil, year, month, day;
+  short hour = 0, minute = 0, second = 0, mil = 0, year = 0, month = 0, day = 0;
   readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, UTC);
   String BC = "";
   if(year < 0) BC = F("B.C");
@@ -1665,7 +1665,7 @@ int DateTime::getTzDST(long* TZ_offset, long* DST_offset){
 void DateTime::synchNow(bool now){
   if(_onSynch && (millis() > synch_millis+synch_interval*SECOND || synch_millis == 0 || now)){ //if on synch function is set
     //synchronysation
-    short hour, minute, second, mil, year, month, day;
+    short hour = 0, minute = 0, second = 0, mil = 0, year = 0, month = 0, day = 0;
     int64_t synch_time = raw_time + (millis()-synch_millis); //synchronization with millis() function
     if(!onSynchUTC) synch_time += TIMEZONE_REPAIR2*(long)(timezone*TIMEZONE_REPAIR1) + shift*MINUTE; //compensation of non UTC time
     rawToDateTime(&synch_time,&hour,&minute,&second,&mil,&year,&month,&day); //converting raw value to date and time
@@ -1746,7 +1746,7 @@ void DateTime::readSynchTime(short *hour, short *minute, short *second, short *m
 //Second parameter is pointing to which value will be read
 //Third parameter sets if value will be in UTC time
 short DateTime::getWriteOne(short value, byte variable, bool UTC){
-  short hour,minute,second,mil,year,month,day;
+  short hour = 0,minute = 0,second = 0,mil = 0,year = 0,month = 0,day = 0;
   readSynchTime(&hour,&minute,&second,&mil,&year,&month,&day, UTC);
   short ret = null_time;
   //Reading
