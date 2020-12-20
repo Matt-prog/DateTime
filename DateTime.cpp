@@ -25,12 +25,12 @@ String toStr64(int64_t val){ //convert 64 bit number to string
 }*/
 
 /* This function returns how many day elapsed from date 0001.01.01.
- * If using years B.C., then it returns negative value.
+ * If using years BC, then it returns negative value.
  * It also counts with leap years as every function in this library.
  */
 int32_t daysFromYearZero(int32_t year){
   if(year >= 0) year--; //skip year 0 because it does not exist
-  bool neg = (year < 0); //check if year is B.C.
+  bool neg = (year < 0); //check if year is BC.
   int32_t days = 0;
   
   //getting count of leap days
@@ -39,12 +39,12 @@ int32_t daysFromYearZero(int32_t year){
   
   days += year*365; //add normal days
   
-  if(neg) days--; //this option is here because year 1 B.C. is also leap day
+  if(neg) days--; //this option is here because year 1 BC is also leap day
   return days;
 }
 
 /* This function returns year calculated from milliseconds from date 0000.01.01 and time 00:00:00:001
- * It can also returns years B.C. if input parameter mil_in is negative.
+ * It can also returns years BC if input parameter mil_in is negative.
  * It also returns how many days elapsed in that year(starts from 1)
  * mil_in is input parameter; year and days_in_year are output parameters
  */
@@ -1243,7 +1243,7 @@ String DateTime::toLongDateString(byte _form, const char *separator1, const char
     case 12: month_ = F("December"); break;
   }
   if(_form % 2 == 0) month_ = month_.substring(0,3);
-  if(year < 0) BC = F("B.C");
+  if(year < 0) BC = F("BC");
   switch(_form){
     case YYYY_MM_DD:
     case YYYY_M_DD: return String(year)+BC+separator1+month_+separator2+String_(day,2);
@@ -1291,7 +1291,7 @@ String DateTime::toShortDateString(byte _form, const char *separator1, const cha
   short hour = 0, minute = 0, second = 0, mil = 0, year = 0, month = 0, day = 0;
   readSynchTime(&hour, &minute, &second, &mil, &year, &month, &day, UTC);
   String BC = "";
-  if(year < 0) BC = F("B.C");
+  if(year < 0) BC = F("BC");
   switch(_form){
     case YYYY_MM_DD: return String(year)+BC+separator1+String_(month,2)+separator2+String_(day,2);
     case YYYY_M_DD: return String(year)+BC+separator1+String(month)+separator2+String_(day,2);
