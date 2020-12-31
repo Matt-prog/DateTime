@@ -1620,7 +1620,7 @@ int DateTime::getTzDST(long* TZ_offset, long* DST_offset){
   http.begin(F("http://worldtimeapi.org/api/ip"));
   
   int httpCode = http.GET();
-  if (httpCode > 0) {
+  if (httpCode == 200) {
     const String& json = http.getString();
     //char raw_offset[] = "\"raw_offset\":";
     //char dst_offset[] = "\"dst_offset\":";
