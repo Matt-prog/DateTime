@@ -1,5 +1,7 @@
 # DateTime library
 
+**This library is deprecated! Please use new more optimized and multiplatform [DateTimeLib](https://github.com/Matt-prog/DateTimeLib) library.**
+
 Powerful library which helps you with time processing on all arduino boards including special functions designed for ESP8266 that keeps you time synchronized. There are a lot of ways to use this library. You can use date and time "variable", get difference between dates and times, set alarm or set millistimer instead of delay function. Main advantage of this library is the wide date range (from 1.1.32767 BC to 31.12.32767) including leap years with millisecond time accuracy and fast calculations, because this library uses special math algorithms to count with leap years without cycles.  
 
 ## DateTime
